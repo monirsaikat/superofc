@@ -161,8 +161,9 @@ public sealed class DeviceBridgeTests(ITestOutputHelper output) : IDisposable
         (await ping.Should().ThrowAsync<DeviceGatewayException>()).Which.Code.Should().Be(BridgeErrors.SdkMissing);
     }
 
+    // CI machines can take well over the 10 s production limit to start the bridge the first time (antivirus scan).
     private DeviceBridgeClient CreateClient()
-        => new(new DeviceBridgeOptions { BridgePath = Path.Combine(AppContext.BaseDirectory, "bridge", "SuperOfc.DeviceBridge.exe"), FakeSessionPath = _session }, NullLogger<DeviceBridgeClient>.Instance);
+        => new(new DeviceBridgeOptions { BridgePath = Path.Combine(AppContext.BaseDirectory, "bridge", "SuperOfc.DeviceBridge.exe"), FakeSessionPath = _session, ConnectTimeout = TimeSpan.FromSeconds(60) }, NullLogger<DeviceBridgeClient>.Instance);
 
     private static string WriteSession()
     {
