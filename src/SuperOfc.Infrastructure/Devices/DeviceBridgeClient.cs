@@ -19,7 +19,8 @@ public sealed class DeviceBridgeOptions
 
     public string? FakeSessionPath { get; set; } = Environment.GetEnvironmentVariable(FakeEnvironmentVariable);
 
-    public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    /// <summary>The first start after install or update can be slow while antivirus scans the bridge.</summary>
+    public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
     public TimeSpan PullTimeout { get; set; } = TimeSpan.FromMinutes(5);
 

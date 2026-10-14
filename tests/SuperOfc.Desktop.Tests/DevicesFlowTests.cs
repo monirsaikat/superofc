@@ -22,6 +22,9 @@ public class DevicesFlowTests
         {
             BridgePath = Path.Combine(AppContext.BaseDirectory, "bridge", "SuperOfc.DeviceBridge.exe"),
             FakeSessionPath = DemoSession,
+
+            // CI machines can take far longer than a desktop PC to start the bridge the first time.
+            ConnectTimeout = TimeSpan.FromSeconds(60),
         }));
 
     private static async Task CreateEmployeeAsync(DesktopTestHost host, string code)
