@@ -486,3 +486,7 @@ artifacts/
 *.db
 *.db-wal
 *.db-shm
+
+# SuperOfc: source folders that the Visual Studio rules above would hide
+!src/**/Backups/
+!tools/release/
