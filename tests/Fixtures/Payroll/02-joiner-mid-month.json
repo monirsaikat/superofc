@@ -1,0 +1,88 @@
+{
+  "period": "2026-03",
+  "employment": {
+    "from": "2026-03-16",
+    "to": null
+  },
+  "overtimeEligible": true,
+  "weeklyOffs": [
+    "Friday",
+    "Saturday"
+  ],
+  "components": [
+    {
+      "code": "BASIC",
+      "name": "Basic salary",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "isBasic": true,
+      "attendanceLinked": true,
+      "order": 1
+    },
+    {
+      "code": "HRA",
+      "name": "House rent",
+      "kind": "Earning",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 2
+    },
+    {
+      "code": "MEDICAL",
+      "name": "Medical",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": false,
+      "order": 3
+    },
+    {
+      "code": "CONV",
+      "name": "Conveyance",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": true,
+      "order": 4
+    },
+    {
+      "code": "PF",
+      "name": "Provident fund",
+      "kind": "Deduction",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 10
+    }
+  ],
+  "segments": [
+    {
+      "from": "2025-01-01",
+      "to": null,
+      "lines": {
+        "BASIC": 30000,
+        "HRA": {
+          "rate": 50
+        },
+        "MEDICAL": 3000,
+        "CONV": 1500,
+        "PF": {
+          "rate": 10
+        }
+      }
+    }
+  ],
+  "note": "Joins on 16 March: 16 of 31 days. Linked and unlinked components both get 16/31.",
+  "expected": {
+    "calendarDays": 16,
+    "payableDays": 16,
+    "gross": 25548,
+    "deductions": 1548,
+    "net": 24000,
+    "lines": {
+      "BASIC": 15484,
+      "HRA": 7742,
+      "MEDICAL": 1548,
+      "CONV": 774,
+      "PF": 1548
+    }
+  },
+  "name": "02-joiner-mid-month"
+}

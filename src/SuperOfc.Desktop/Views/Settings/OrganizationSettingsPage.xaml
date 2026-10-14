@@ -1,0 +1,76 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Settings.OrganizationSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Settings">
+  <DockPanel>
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock VerticalAlignment="Center" Style="{StaticResource SectionTitle}" Text="{Binding Title}" />
+        <ComboBox
+            Width="180"
+            Margin="16,0,0,0"
+            DisplayMemberPath="Text"
+            ItemsSource="{x:Static vm:OrganizationSettingsViewModel.Kinds}"
+            SelectedValue="{Binding Kind}"
+            SelectedValuePath="Value" />
+      </StackPanel>
+      <ui:Button
+          HorizontalAlignment="Right"
+          Appearance="Primary"
+          Command="{Binding NewCommand}"
+          Content="{x:Static res:Strings.Org_New}"
+          Icon="{ui:SymbolIcon Add20}"
+          Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+    <ui:Card
+        Width="320"
+        Margin="16,0,0,0"
+        Padding="{StaticResource CardPadding}"
+        VerticalAlignment="Top"
+        DockPanel.Dock="Right"
+        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Org_Name}" />
+          <ui:TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Org_Code}" />
+          <ui:TextBox Text="{Binding EditCode, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Org_Description}" />
+          <ui:TextBox Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Org_SortOrder}" />
+          <ui:NumberBox Maximum="9999" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditSortOrder}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+          <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveCommand}" Content="{x:Static res:Strings.App_Save}" />
+          <ui:Button Margin="0,0,8,0" Command="{Binding CancelEditCommand}" Content="{x:Static res:Strings.App_Cancel}" />
+          <ui:Button Appearance="Danger" Command="{Binding DeleteCommand}" Content="{x:Static res:Strings.App_Delete}" />
+        </StackPanel>
+      </StackPanel>
+    </ui:Card>
+
+    <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding Selected, Mode=TwoWay}" Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="{x:Static res:Strings.Org_Name}" />
+        <DataGridTextColumn Width="100" Binding="{Binding Code}" Header="{x:Static res:Strings.Org_Code}" />
+        <DataGridTextColumn Width="*" Binding="{Binding Description}" Header="{x:Static res:Strings.Org_Description}" />
+        <DataGridTextColumn Width="100" Binding="{Binding EmployeeCount}" Header="{x:Static res:Strings.Org_Employees}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

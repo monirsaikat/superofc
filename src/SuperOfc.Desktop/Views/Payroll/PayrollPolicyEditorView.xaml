@@ -1,0 +1,67 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Payroll.PayrollPolicyEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Payroll">
+  <Grid Margin="0,12,0,0">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition />
+      <ColumnDefinition Width="24" />
+      <ColumnDefinition />
+    </Grid.ColumnDefinitions>
+    <StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_Basis}" />
+        <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:PayrollPolicyEditor.Bases}" SelectedValue="{Binding ProrateBasis}" SelectedValuePath="Value" />
+        <TextBlock Margin="0,4,0,0" Style="{StaticResource Caption}" Text="{x:Static res:Strings.PolicyPay_BasisHint}" TextWrapping="Wrap" />
+      </StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_MidMonth}" />
+        <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:PayrollPolicyEditor.MidMonthChoices}" SelectedValue="{Binding MidMonthChange}" SelectedValuePath="Value" />
+      </StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_MinimumNet}" />
+        <ui:NumberBox MaxDecimalPlaces="2" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding MinimumNetPay}" />
+        <TextBlock Margin="0,4,0,0" Style="{StaticResource Caption}" Text="{x:Static res:Strings.PolicyPay_MinimumNetHint}" TextWrapping="Wrap" />
+      </StackPanel>
+    </StackPanel>
+    <StackPanel Grid.Column="2">
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_OtBase}" />
+        <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:PayrollPolicyEditor.OvertimeBases}" SelectedValue="{Binding OvertimeRateBase}" SelectedValuePath="Value" />
+      </StackPanel>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_OtMultiplier}" TextWrapping="Wrap" />
+          <ui:NumberBox MaxDecimalPlaces="2" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding OvertimeMultiplier}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_OtHolidayMultiplier}" TextWrapping="Wrap" />
+          <ui:NumberBox MaxDecimalPlaces="2" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding HolidayOvertimeMultiplier}" />
+        </StackPanel>
+      </Grid>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_Rounding}" />
+          <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:PayrollPolicyEditor.RoundingModes}" SelectedValue="{Binding RoundingMode}" SelectedValuePath="Value" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyPay_RoundTo}" />
+          <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:PayrollPolicyEditor.RoundingSteps}" SelectedValue="{Binding RoundingStep}" SelectedValuePath="Value" />
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+  </Grid>
+</UserControl>

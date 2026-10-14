@@ -1,0 +1,128 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Settings.ShiftsSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <DockPanel>
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <TextBlock VerticalAlignment="Center" Style="{StaticResource SectionTitle}" Text="{Binding Title}" />
+      <ui:Button
+          HorizontalAlignment="Right"
+          Appearance="Primary"
+          Command="{Binding NewCommand}"
+          Content="{x:Static res:Strings.Shifts_New}"
+          Icon="{ui:SymbolIcon Add20}"
+          Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+    <!-- Assign to a department -->
+    <ui:Card
+        Margin="0,12,0,0"
+        Padding="{StaticResource CardPadding}"
+        DockPanel.Dock="Bottom"
+        Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel>
+        <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Shifts_AssignTitle}" />
+        <TextBlock Margin="0,2,0,10" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Shifts_AssignHint}" />
+        <WrapPanel>
+          <ComboBox Width="200" Margin="0,0,8,0" DisplayMemberPath="Name" ItemsSource="{Binding Departments}" SelectedValue="{Binding AssignDepartmentId}" SelectedValuePath="Id" />
+          <ComboBox Width="180" Margin="0,0,8,0" DisplayMemberPath="Name" ItemsSource="{Binding Shifts}" SelectedValue="{Binding AssignShiftId}" SelectedValuePath="Id" />
+          <DatePicker Width="150" Margin="0,0,8,0" SelectedDate="{Binding AssignFrom}" />
+          <ui:Button Command="{Binding AssignToDepartmentCommand}" Content="{x:Static res:Strings.Shifts_Assign}" />
+        </WrapPanel>
+      </StackPanel>
+    </ui:Card>
+
+    <ui:Card
+        Width="340"
+        Margin="16,0,0,0"
+        Padding="{StaticResource CardPadding}"
+        VerticalAlignment="Top"
+        DockPanel.Dock="Right"
+        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+      <ScrollViewer MaxHeight="620" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition Width="90" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_Name}" />
+              <ui:TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_Code}" />
+              <ui:TextBox Text="{Binding EditCode, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+          </Grid>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_Start}" />
+              <ui:TextBox PlaceholderText="09:00" Text="{Binding EditStart, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_End}" />
+              <ui:TextBox PlaceholderText="18:00" Text="{Binding EditEnd, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+          </Grid>
+          <TextBlock Margin="0,-6,0,12" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Shifts_TimeHint}" TextWrapping="Wrap" />
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_Break}" />
+            <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditBreak}" />
+          </StackPanel>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_GraceIn}" />
+            <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditGraceIn}" />
+          </StackPanel>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_GraceOut}" />
+            <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditGraceOut}" />
+          </StackPanel>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_HalfDayMin}" />
+            <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditHalfDay}" />
+          </StackPanel>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_FullDayMin}" />
+            <ui:NumberBox MaxDecimalPlaces="0" Minimum="1" SpinButtonPlacementMode="Hidden" Value="{Binding EditFullDay}" />
+          </StackPanel>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Shifts_OvertimeAfter}" />
+            <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditOvertimeAfter}" />
+          </StackPanel>
+          <CheckBox Margin="{StaticResource FieldMargin}" Content="{x:Static res:Strings.Shifts_Default}" IsChecked="{Binding EditIsDefault}" />
+          <StackPanel Orientation="Horizontal">
+            <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveCommand}" Content="{x:Static res:Strings.App_Save}" />
+            <ui:Button Margin="0,0,8,0" Command="{Binding CancelEditCommand}" Content="{x:Static res:Strings.App_Cancel}" />
+            <ui:Button Appearance="Danger" Command="{Binding DeleteCommand}" Content="{x:Static res:Strings.App_Delete}" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </ui:Card>
+
+    <DataGrid ItemsSource="{Binding Shifts}" SelectedItem="{Binding Selected, Mode=TwoWay}" Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="{x:Static res:Strings.Shifts_Name}" />
+        <DataGridTextColumn Width="70" Binding="{Binding Code}" Header="{x:Static res:Strings.Shifts_Code}" />
+        <DataGridTextColumn Width="120" Binding="{Binding TimeText}" Header="{x:Static res:Strings.Shifts_Time}" />
+        <DataGridTextColumn Width="70" Binding="{Binding BreakMinutes}" Header="{x:Static res:Strings.Shifts_Break}" />
+        <DataGridCheckBoxColumn Width="70" Binding="{Binding IsDefault}" Header="{x:Static res:Strings.Shifts_IsDefault}" />
+        <DataGridTextColumn Width="90" Binding="{Binding EmployeeCount}" Header="{x:Static res:Strings.Shifts_Employees}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

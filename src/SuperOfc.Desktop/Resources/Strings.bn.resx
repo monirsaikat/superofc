@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali UI texts (P8-T4 scaffold). Keys missing here fall back to English and are logged once.
+     Translations below are a starting point and need review by a native speaker before release (doc 10 Q9). -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Nav_Attendance" xml:space="preserve"><value>হাজিরা</value></data>
+  <data name="Nav_Dashboard" xml:space="preserve"><value>ড্যাশবোর্ড</value></data>
+  <data name="Nav_Devices" xml:space="preserve"><value>ডিভাইস</value></data>
+  <data name="Nav_Employees" xml:space="preserve"><value>কর্মচারী</value></data>
+  <data name="Nav_Leave" xml:space="preserve"><value>ছুটি</value></data>
+  <data name="Nav_Loans" xml:space="preserve"><value>ঋণ</value></data>
+  <data name="Nav_Payroll" xml:space="preserve"><value>বেতন</value></data>
+  <data name="Nav_Reports" xml:space="preserve"><value>রিপোর্ট</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>সেটিংস</value></data>
+  <data name="Nav_Tax" xml:space="preserve"><value>কর</value></data>
+</root>

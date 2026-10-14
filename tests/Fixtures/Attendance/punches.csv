@@ -1,0 +1,5 @@
+EmployeeCode,DateTime,Type
+E1,2026-03-11 09:01,In
+E1,2026-03-11 18:10,Out
+E9,2026-03-11 09:00,In
+E2,not a date,In

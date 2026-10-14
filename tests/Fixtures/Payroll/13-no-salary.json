@@ -1,0 +1,68 @@
+{
+  "period": "2026-03",
+  "employment": {
+    "from": "2025-01-01",
+    "to": null
+  },
+  "overtimeEligible": true,
+  "weeklyOffs": [
+    "Friday",
+    "Saturday"
+  ],
+  "components": [
+    {
+      "code": "BASIC",
+      "name": "Basic salary",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "isBasic": true,
+      "attendanceLinked": true,
+      "order": 1
+    },
+    {
+      "code": "HRA",
+      "name": "House rent",
+      "kind": "Earning",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 2
+    },
+    {
+      "code": "MEDICAL",
+      "name": "Medical",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": false,
+      "order": 3
+    },
+    {
+      "code": "CONV",
+      "name": "Conveyance",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": true,
+      "order": 4
+    },
+    {
+      "code": "PF",
+      "name": "Provident fund",
+      "kind": "Deduction",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 10
+    }
+  ],
+  "segments": [],
+  "note": "No assignment: an empty payslip with a warning.",
+  "expected": {
+    "payableDays": 31,
+    "gross": 0,
+    "deductions": 0,
+    "net": 0,
+    "warnings": [
+      "No salary is assigned for this period."
+    ],
+    "lines": {}
+  },
+  "name": "13-no-salary"
+}

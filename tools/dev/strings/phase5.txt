@@ -1,0 +1,85 @@
+# Enum text
+LoanKind_Loan=Loan
+LoanKind_Advance=Advance
+LoanStatus_Requested=Requested
+LoanStatus_Approved=Approved
+LoanStatus_Active=Repaying
+LoanStatus_Closed=Closed
+LoanStatus_WrittenOff=Written off
+LoanStatus_Rejected=Rejected
+InstallmentStatus_Due=Due
+InstallmentStatus_Deducted=Deducted from salary
+InstallmentStatus_Paid=Paid
+InstallmentStatus_Skipped=Skipped
+InstallmentStatus_Waived=Waived
+
+# Loans page
+Loans_Title=Loans and advances
+Loans_New=New loan
+Loans_All=All loans
+Loans_AllOpen=Open loans
+Loans_SearchHint=Search number, name or code
+Loans_Totals={0} loans, {1} outstanding, {2} owed by people who have left.
+Loans_Empty=No loans yet. Use New loan to record a loan or a salary advance; installments are then taken from salary each month.
+Loans_Number=Number
+Loans_Kind=Type
+Loans_Amount=Amount
+Loans_Installment=Installment
+Loans_Progress=Paid
+Loans_Outstanding=Outstanding
+Loans_NextDue=Next due
+Loans_Receivable=The employee has left and still owes money.
+
+# Loan form
+LoanForm_NewTitle=New loan
+LoanForm_EditTitle=Edit loan request
+LoanForm_Interest=Interest
+LoanForm_Rate=Rate per year (%)
+LoanForm_Count=Number of installments
+LoanForm_FirstMonth=First installment in
+LoanForm_RequestedOn=Requested on
+LoanForm_Purpose=Purpose
+LoanForm_Schedule=Repayment schedule
+LoanForm_Principal=Principal
+LoanForm_Total=Repay {0} in total ({1} interest): {2} installments of {3}.
+LoanForm_Net=Net pay now {0}, after the installment {1}.
+LoanForm_DatesRequired=Enter the first month and the request date.
+LoanForm_SaveRequest=Save request
+LoanForm_SaveApprove=Save and approve
+
+# Loan detail
+LoanDetail_Terms={0} at {1} interest, {2} installments of {3} from {4}.
+LoanDetail_Total=Total to repay
+LoanDetail_Repaid=Repaid
+LoanDetail_Paid=Paid
+LoanDetail_Lent=Lent
+LoanDetail_Balance=Balance
+LoanDetail_Date=Date
+LoanDetail_Description=Description
+LoanDetail_StatementTab=Statement
+LoanDetail_Statement=Statement PDF
+LoanDetail_Approve=Approve
+LoanDetail_Approved=Loan approved. Pay it out to start the deductions.
+LoanDetail_Reject=Reject
+LoanDetail_RejectMessage=The request stays on record as rejected.
+LoanDetail_Disburse=Pay out
+LoanDetail_PaidOutOn=Paid out on
+LoanDetail_Disbursed=Loan paid out. Installments are taken from salary from the first due month.
+LoanDetail_Repay=Record repayment
+LoanDetail_RepayMessage=Money repaid outside payroll, for example in cash. It covers the earliest installments first.
+LoanDetail_RepaidOn=Repaid on
+LoanDetail_InvalidAmount=Enter an amount above zero.
+LoanDetail_Settle=Settle now
+LoanDetail_SettleTitle=Settle {0} today?
+LoanDetail_SettleQuote=Settling today costs {0}; {1} of interest would be waived.
+LoanDetail_Settled=Loan settled for {0}.
+LoanDetail_WriteOff=Write off
+LoanDetail_WriteOffTitle=Write off {0} ({1} outstanding)?
+LoanDetail_WriteOffMessage=Nothing more will be deducted. This cannot be undone.
+LoanDetail_DeleteTitle=Delete {0}?
+LoanDetail_DeleteMessage=Only requests and rejected loans can be deleted.
+
+# Employee > Loans
+EmpTab_Loans=Loans
+EmpLoans_None=No loans or advances.
+EmpLoans_Summary={0} loans being repaid, {1} outstanding.

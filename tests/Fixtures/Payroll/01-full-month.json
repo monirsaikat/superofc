@@ -1,0 +1,87 @@
+{
+  "period": "2026-03",
+  "employment": {
+    "from": "2025-01-01",
+    "to": null
+  },
+  "overtimeEligible": true,
+  "weeklyOffs": [
+    "Friday",
+    "Saturday"
+  ],
+  "components": [
+    {
+      "code": "BASIC",
+      "name": "Basic salary",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "isBasic": true,
+      "attendanceLinked": true,
+      "order": 1
+    },
+    {
+      "code": "HRA",
+      "name": "House rent",
+      "kind": "Earning",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 2
+    },
+    {
+      "code": "MEDICAL",
+      "name": "Medical",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": false,
+      "order": 3
+    },
+    {
+      "code": "CONV",
+      "name": "Conveyance",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": true,
+      "order": 4
+    },
+    {
+      "code": "PF",
+      "name": "Provident fund",
+      "kind": "Deduction",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 10
+    }
+  ],
+  "segments": [
+    {
+      "from": "2025-01-01",
+      "to": null,
+      "lines": {
+        "BASIC": 30000,
+        "HRA": {
+          "rate": 50
+        },
+        "MEDICAL": 3000,
+        "CONV": 1500,
+        "PF": {
+          "rate": 10
+        }
+      }
+    }
+  ],
+  "note": "March 2026 has 31 days, 8 Fridays/Saturdays off (paid). Everyone present: nothing is pro-rated.",
+  "expected": {
+    "payableDays": 31,
+    "gross": 49500,
+    "deductions": 3000,
+    "net": 46500,
+    "lines": {
+      "BASIC": 30000,
+      "HRA": 15000,
+      "MEDICAL": 3000,
+      "CONV": 1500,
+      "PF": 3000
+    }
+  },
+  "name": "01-full-month"
+}

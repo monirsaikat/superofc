@@ -1,0 +1,194 @@
+# App and shell
+App_Name=SuperOfc
+App_Starting=Starting…
+App_CheckingData=Checking your data…
+App_UpdatingData=Updating your data to the new version…
+App_ErrorTitle=Something went wrong
+App_ErrorMessage=An unexpected error occurred. Your data is safe. You can copy the details and send them to support.
+App_CopyDetails=Copy details
+App_Close=Close
+App_Exit=Exit
+App_Ok=OK
+App_Cancel=Cancel
+App_Save=Save
+App_Saved=Saved
+App_Delete=Delete
+App_Edit=Edit
+App_Add=Add
+App_New=New
+App_Refresh=Refresh
+App_Search=Search
+App_Back=Back
+App_Next=Next
+App_Finish=Finish
+App_Yes=Yes
+App_No=No
+App_Loading=Loading…
+App_NoItems=Nothing here yet.
+App_Export=Export
+App_Import=Import
+App_Reason=Reason
+App_Notes=Notes
+App_Status=Status
+App_Actions=Actions
+App_Version=Version {0}
+App_UnsavedTitle=Discard unsaved changes?
+App_UnsavedMessage=You have changes that are not saved. If you leave now they will be lost.
+App_Discard=Discard
+App_DbCorruptTitle=Your data file is damaged
+App_DbCorruptMessage=SuperOfc found a problem in the data file ({0}). Restore the most recent backup to continue.
+App_DbTooNewTitle=Please update SuperOfc
+App_DbMigrationFailedTitle=Update could not finish
+App_RestoreBackup=Restore a backup…
+App_OpenDataFolder=Open data folder
+App_SecondInstance=SuperOfc is already running.
+
+# Navigation
+Nav_Dashboard=Dashboard
+Nav_Employees=Employees
+Nav_Attendance=Attendance
+Nav_Leave=Leave
+Nav_Payroll=Payroll
+Nav_Loans=Loans
+Nav_Tax=Tax
+Nav_Reports=Reports
+Nav_Devices=Devices
+Nav_Settings=Settings
+Nav_SignOut=Sign out
+Nav_Lock=Lock
+Nav_ComingSoon=This area is being built.
+Nav_ComingSoonDetail=It will arrive in an upcoming update.
+
+# Login and lock
+Login_Title=Sign in
+Login_Subtitle=Sign in to {0}
+Login_Username=Username
+Login_Password=Password
+Login_SignIn=Sign in
+Lock_Title=Locked
+Lock_Message=SuperOfc is locked. Enter your password to continue.
+Lock_Unlock=Unlock
+Lock_SignOutInstead=Sign out instead
+
+# Setup wizard
+Setup_Title=Welcome to SuperOfc
+Setup_Subtitle=Let us set up your company. You can change all of this later in Settings.
+Setup_StepCompany=Company
+Setup_StepRegion=Region and calendar
+Setup_StepAdmin=Administrator
+Setup_StepFinish=Finish
+Setup_CompanyName=Company name
+Setup_CurrencyCode=Currency code
+Setup_CurrencySymbol=Currency symbol
+Setup_Grouping=Number grouping
+Setup_GroupingWestern=1,234,567.00
+Setup_GroupingSouthAsian=12,34,567.00
+Setup_TimeZone=Time zone
+Setup_FiscalStart=Fiscal year starts in
+Setup_DateFormat=Date format
+Setup_DatePreview=Example: {0}
+Setup_WorkingWeek=Working week
+Setup_AdminHint=This account can do everything, including managing other users.
+Setup_DisplayName=Your name
+Setup_ConfirmPassword=Confirm password
+Setup_PasswordMismatch=The passwords do not match.
+Setup_PasswordHint=At least 8 characters with a letter and a number.
+Setup_SampleData=Load sample data so I can try things out
+Setup_SampleDataHint=Adds demo departments, employees, shifts and attendance. Use a fresh install for real data.
+Setup_Summary=Ready to create {0}.
+Setup_Create=Create company
+
+# Working week
+Week_Full=Full day
+Week_Half=Half day
+Week_Off=Off
+
+# Dashboard
+Dashboard_Title=Dashboard
+Dashboard_Welcome=Good to see you, {0}.
+Dashboard_LastBackup=Last backup
+Dashboard_NoBackup=No backup yet
+
+# Settings
+Settings_Title=Settings
+Settings_Company=Company
+Settings_Users=Users and roles
+Settings_Policies=Policies
+Settings_Backup=Backup and restore
+Settings_Updates=Updates
+Settings_Appearance=Appearance
+Settings_About=About
+Settings_Address=Address
+Settings_Phone=Phone
+Settings_Email=Email
+Settings_TaxId=Tax identifier
+Settings_Theme=Theme
+Settings_ThemeSystem=Use system setting
+Settings_ThemeLight=Light
+Settings_ThemeDark=Dark
+Settings_DataFolder=Data folder
+Settings_LogFolder=Log folder
+Settings_ExportDiagnostics=Export diagnostics…
+Settings_OpenLogs=Open logs folder
+
+# Users
+Users_Title=Users and roles
+Users_New=New user
+Users_Username=Username
+Users_DisplayName=Display name
+Users_Role=Role
+Users_Active=Active
+Users_LastLogin=Last sign-in
+Users_ResetPassword=Reset password
+Users_NewPassword=New password
+Users_LockedOut=Locked out
+Users_ChangeMyPassword=Change my password
+Users_CurrentPassword=Current password
+
+# Backup
+Backup_Title=Backup and restore
+Backup_Description=SuperOfc backs up your data automatically every day and before updates. You can also back up now.
+Backup_Now=Back up now
+Backup_Created=Backup created
+Backup_History=Backup history
+Backup_Type=Type
+Backup_Size=Size
+Backup_Created_At=Created
+Backup_Restore=Restore…
+Backup_RestoreThis=Restore this backup
+Backup_RestoreTitle=Restore this backup?
+Backup_RestoreMessage=Your current data will be replaced with the backup from {0}. A safety copy of the current data is made first. SuperOfc will restart.
+Backup_OpenFolder=Open backup folder
+Backup_RestoreDone=Restore finished. SuperOfc will now restart.
+
+# Updates
+Updates_Title=Updates
+Updates_Current=Current version
+Updates_Check=Check for updates
+Updates_Checking=Checking for updates…
+Updates_UpToDate=You have the latest version.
+Updates_Available=Version {0} is available.
+Updates_Ready=Version {0} is ready. Restart to update.
+Updates_Restart=Restart and update
+Updates_NotInstalled=Updates are turned off because this copy is not installed (developer build).
+Updates_Mode=Update mode
+Updates_ModeAutomatic=Download automatically and ask to restart
+Updates_ModeNotify=Only tell me when an update is available
+Updates_ModeManual=Never check automatically
+Updates_Channel=Channel
+Updates_ChannelStable=Stable
+Updates_ChannelBeta=Beta (early access)
+Updates_FeedUrl=Update address
+Updates_LastCheck=Last checked {0}
+Updates_Failed=Could not check for updates: {0}
+Updates_Blocked=The update will be applied after the current work finishes.
+
+# Policies
+Policies_Title=Policies
+Policies_EffectiveFrom=Effective from
+Policies_General=Security and sync
+Policies_IdleLock=Lock after idle minutes
+Policies_MaxFailed=Failed sign-ins before lockout
+Policies_LockoutMinutes=Lockout minutes
+Policies_AutoSync=Device auto-sync interval (minutes)
+Policies_History=Earlier versions

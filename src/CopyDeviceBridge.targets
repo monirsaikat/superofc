@@ -1,0 +1,28 @@
+<Project>
+  <!--
+    Builds the 32-bit device bridge (net48, ADR-06) and copies it to $(OutDir)bridge so development runs and tests
+    find it where the installer puts it. Imported by the desktop app and the infrastructure tests.
+  -->
+  <PropertyGroup>
+    <DeviceBridgeProject>$(MSBuildThisFileDirectory)SuperOfc.DeviceBridge\SuperOfc.DeviceBridge.csproj</DeviceBridgeProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(DeviceBridgeProject)">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+      <GlobalPropertiesToRemove>RuntimeIdentifier;SelfContained;PlatformTarget</GlobalPropertiesToRemove>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="CopyDeviceBridge" AfterTargets="Build">
+    <PropertyGroup>
+      <_BridgeOut>$(MSBuildThisFileDirectory)SuperOfc.DeviceBridge\bin\$(Configuration)\net48\</_BridgeOut>
+    </PropertyGroup>
+    <ItemGroup>
+      <_BridgeFiles Include="$(_BridgeOut)**\*" Exclude="$(_BridgeOut)**\*.pdb.tmp" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_BridgeFiles)" DestinationFiles="@(_BridgeFiles->'$(OutDir)bridge\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

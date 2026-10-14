@@ -1,0 +1,15 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Pages.ComingSoonPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <Grid Margin="{StaticResource PagePadding}">
+    <TextBlock VerticalAlignment="Top" Style="{StaticResource PageTitle}" Text="{Binding Title}" />
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+      <ui:SymbolIcon HorizontalAlignment="Center" FontSize="48" Symbol="WrenchScrewdriver24" />
+      <TextBlock Margin="0,12,0,4" HorizontalAlignment="Center" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Nav_ComingSoon}" />
+      <TextBlock HorizontalAlignment="Center" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Nav_ComingSoonDetail}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

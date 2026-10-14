@@ -1,0 +1,58 @@
+# HR letters: navigation and tabs
+Nav_Letters=Letters
+Letters_Title=Letters
+EmpTab_Letters=Letters
+Settings_LetterTemplates=Letter templates
+
+# Letter kinds
+LetterKind_Appointment=Appointment
+LetterKind_Confirmation=Confirmation
+LetterKind_Increment=Increment
+LetterKind_Promotion=Promotion
+LetterKind_Transfer=Transfer
+LetterKind_SalaryCertificate=Salary certificate
+LetterKind_ExperienceCertificate=Experience certificate
+LetterKind_Relieving=Relieving
+LetterKind_Warning=Warning
+LetterKind_Other=Other
+
+# Template settings
+LetterTemplates_AddStandard=Add standard letters
+LetterTemplates_New=New template
+LetterTemplates_Hint=Write a letter once. Fields in braces, such as {Employee.Name} or {Salary.Gross}, are filled from each employee's record when the letter is issued.
+LetterTemplates_Fields=Fields
+LetterTemplates_FieldsHint=Double-click a field to put it where the cursor is.
+LetterTemplates_Prefix=Number prefix
+LetterTemplates_Active=Show this template when issuing letters
+LetterTemplates_Subject=Subject
+LetterTemplates_Body=Letter
+LetterTemplates_FormatHint=Leave an empty line between paragraphs. Put **two stars** around words to make them bold. {Input.Reason} asks for text when the letter is issued. Write {{ or }} for a literal brace.
+LetterTemplates_Preview=Preview
+LetterTemplates_SampleEmployee=Employee shown in the preview
+LetterTemplates_NewBody=Dear {Employee.Name},\n\nWrite the letter here.\n\nYours sincerely,\n\nFor {Company.Name}
+LetterTemplates_DeleteTitle=Delete {0}?
+LetterTemplates_DeleteMessage=Letters already issued from this template are kept.
+LetterTemplates_StandardAdded={0} standard templates added
+LetterTemplates_Missing=Unknown or empty for this employee: {0}
+
+# Issuing
+Letters_IssueTab=Issue
+Letters_RegisterTab=Issued letters
+Letters_Who=Who
+Letters_What=Letter
+Letters_IncludeLeft=Include people who have left
+Letters_Template=Template
+Letters_Date=Date
+Letters_OnePerEmployee=Save a separate PDF for each person
+Letters_Issue=Issue and save PDF
+Letters_ChooseTemplateAndPeople=Choose a template, a date and at least one person.
+Letters_PickFolder=Choose a folder for the letters
+Letters_Issued={0} letters issued ({1} to {2})
+Letters_Selected={0} selected
+Letters_RegisterSearch=Search number, name or template
+Letters_RegisterEmpty=No letters issued yet.
+Letters_Number=Number
+Letters_IssuedBy=Issued by
+Letters_Reprint=Reprint
+Letters_New=New letter
+EmpLetters_None=No letters issued to this person yet.

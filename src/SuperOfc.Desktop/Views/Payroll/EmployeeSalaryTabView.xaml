@@ -1,0 +1,137 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Payroll.EmployeeSalaryTabView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:mvvm="clr-namespace:SuperOfc.Desktop.Mvvm"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <DockPanel>
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+    <!-- Current salary -->
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <StackPanel Visibility="{Binding Current, Converter={StaticResource HasValueToVisibility}}">
+        <TextBlock Style="{StaticResource Caption}" Text="{x:Static res:Strings.Salary_Current}" />
+        <TextBlock Style="{StaticResource TileValue}" Text="{Binding Current.Gross, Converter={StaticResource Money}}" />
+        <TextBlock Style="{StaticResource Caption}">
+          <Run Text="{x:Static res:Strings.Payroll_Net}" />
+          <Run Text="{Binding Current.Net, Mode=OneWay, Converter={StaticResource Money}}" />
+          <Run Text=" · " />
+          <Run Text="{x:Static res:Strings.Salary_From}" />
+          <Run Text="{Binding Current.EffectiveFrom, Mode=OneWay, StringFormat=d}" />
+          <Run Text=" · " />
+          <Run Text="{Binding Current.StructureName, Mode=OneWay}" />
+        </TextBlock>
+      </StackPanel>
+      <TextBlock
+          VerticalAlignment="Center"
+          Style="{StaticResource BodyText}"
+          Text="{x:Static res:Strings.Salary_None}"
+          Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+      <ui:Button
+          HorizontalAlignment="Right"
+          VerticalAlignment="Center"
+          Appearance="Primary"
+          Command="{Binding NewCommand}"
+          Content="{x:Static res:Strings.Salary_New}"
+          Icon="{ui:SymbolIcon Add20}"
+          Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
+
+    <!-- Editor -->
+    <ui:Card
+        Margin="0,0,0,16"
+        Padding="{StaticResource CardPadding}"
+        DockPanel.Dock="Top"
+        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="160" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition />
+          </Grid.ColumnDefinitions>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Salary_EffectiveFrom}" />
+            <DatePicker SelectedDate="{Binding EditFrom}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Salary_Structure}" />
+            <ComboBox DisplayMemberPath="Name" ItemsSource="{Binding Structures}" SelectedValue="{Binding EditStructureId}" SelectedValuePath="Id" />
+          </StackPanel>
+          <ui:Button
+              Grid.Column="4"
+              Margin="0,0,0,12"
+              VerticalAlignment="Bottom"
+              Command="{Binding ApplyStructureCommand}"
+              Content="{x:Static res:Strings.Salary_ApplyStructure}" />
+          <StackPanel Grid.Column="6" Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Salary_Note}" />
+            <ui:TextBox Text="{Binding EditNote, UpdateSourceTrigger=PropertyChanged}" />
+          </StackPanel>
+        </Grid>
+        <ContentControl
+            Margin="{StaticResource FieldMargin}"
+            Content="{Binding Editor}"
+            ContentTemplateSelector="{x:Static mvvm:ViewLocator.Instance}"
+            Focusable="False" />
+        <StackPanel Orientation="Horizontal">
+          <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveCommand}" Content="{x:Static res:Strings.App_Save}" />
+          <ui:Button Command="{Binding CancelEditCommand}" Content="{x:Static res:Strings.App_Cancel}" />
+        </StackPanel>
+      </StackPanel>
+    </ui:Card>
+
+    <!-- History -->
+    <TextBlock Margin="0,0,0,8" DockPanel.Dock="Top" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Salary_History}" />
+    <DataGrid ItemsSource="{Binding History}" Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="110" Binding="{Binding EffectiveFrom, StringFormat=d}" Header="{x:Static res:Strings.Salary_From}" />
+        <DataGridTextColumn Width="110" Binding="{Binding EffectiveTo, StringFormat=d}" Header="{x:Static res:Strings.Salary_To}" />
+        <DataGridTextColumn Width="140" Binding="{Binding StructureName}" Header="{x:Static res:Strings.Salary_Structure}" />
+        <DataGridTextColumn Width="130" Binding="{Binding Gross, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.Payroll_Gross}" />
+        <DataGridTextColumn Width="130" Binding="{Binding Net, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.Payroll_Net}" />
+        <DataGridTextColumn Width="*" Binding="{Binding Note}" Header="{x:Static res:Strings.Salary_Note}" />
+        <DataGridTemplateColumn Width="170">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource Caption}"
+                    Text="{x:Static res:Strings.Salary_Locked}"
+                    Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}" />
+                <StackPanel Orientation="Horizontal" Visibility="{Binding IsLocked, Converter={StaticResource InverseBoolToVisibility}}">
+                  <ui:Button
+                      Margin="0,0,4,0"
+                      Padding="8,2"
+                      Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                      CommandParameter="{Binding}"
+                      Content="{x:Static res:Strings.App_Edit}"
+                      Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVisibility}}" />
+                  <ui:Button
+                      Padding="8,2"
+                      Appearance="Danger"
+                      Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                      CommandParameter="{Binding}"
+                      Content="{x:Static res:Strings.App_Delete}"
+                      Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+              </StackPanel>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

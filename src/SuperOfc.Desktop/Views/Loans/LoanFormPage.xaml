@@ -1,0 +1,128 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Loans.LoanFormPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Loans">
+  <DockPanel Margin="{StaticResource PagePadding}">
+    <TextBlock Margin="0,0,0,12" DockPanel.Dock="Top" Style="{StaticResource PageTitle}" Text="{Binding Title}" />
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        TextWrapping="Wrap"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+    <StackPanel Margin="0,12,0,0" DockPanel.Dock="Bottom" Orientation="Horizontal">
+      <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveCommand}" Content="{x:Static res:Strings.LoanForm_SaveRequest}" />
+      <ui:Button
+          Margin="0,0,8,0"
+          Command="{Binding SaveAndApproveCommand}"
+          Content="{x:Static res:Strings.LoanForm_SaveApprove}"
+          Visibility="{Binding CanApprove, Converter={StaticResource BoolToVisibility}}" />
+    </StackPanel>
+
+    <!-- Form on the left, schedule on the right -->
+    <StackPanel Width="380" Margin="0,0,24,0" DockPanel.Dock="Left">
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Leave_Employee}" />
+        <ComboBox
+            DisplayMemberPath="Name"
+            IsEditable="True"
+            IsTextSearchEnabled="True"
+            ItemsSource="{Binding Employees}"
+            SelectedValue="{Binding EmployeeId, ValidatesOnNotifyDataErrors=True}"
+            SelectedValuePath="Id"
+            TextSearch.TextPath="Name" />
+      </StackPanel>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Loans_Kind}" />
+          <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:LoanFormViewModel.Kinds}" SelectedValue="{Binding Kind}" SelectedValuePath="Value" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Loans_Amount}" />
+          <ui:NumberBox MaxDecimalPlaces="2" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding Amount, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+        </StackPanel>
+      </Grid>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LoanForm_Interest}" />
+          <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:LoanFormViewModel.Methods}" SelectedValue="{Binding Method}" SelectedValuePath="Value" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Style="{StaticResource Field}" IsEnabled="{Binding UsesRate}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LoanForm_Rate}" />
+          <ui:NumberBox MaxDecimalPlaces="2" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding Rate, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+        </StackPanel>
+      </Grid>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LoanForm_Count}" />
+          <ui:NumberBox MaxDecimalPlaces="0" Maximum="120" Minimum="1" SpinButtonPlacementMode="Hidden" Value="{Binding Count, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LoanForm_FirstMonth}" />
+          <DatePicker SelectedDate="{Binding FirstMonth, ValidatesOnNotifyDataErrors=True}" />
+        </StackPanel>
+      </Grid>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LoanForm_RequestedOn}" />
+        <DatePicker SelectedDate="{Binding RequestedOn}" />
+      </StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LoanForm_Purpose}" />
+        <ui:TextBox Text="{Binding Purpose, UpdateSourceTrigger=PropertyChanged}" />
+      </StackPanel>
+    </StackPanel>
+
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Top">
+        <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.LoanForm_Schedule}" />
+        <TextBlock Margin="0,4,0,0" Style="{StaticResource BodyText}" Text="{Binding TotalText}" TextWrapping="Wrap" />
+        <TextBlock Margin="0,4,0,0" FontWeight="SemiBold" Text="{Binding NetText}" TextWrapping="Wrap" />
+        <ItemsControl Margin="0,8,0,8" Focusable="False" ItemsSource="{Binding Warnings}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Margin="0,2" Foreground="{StaticResource StatusLateBrush}" Text="{Binding}" TextWrapping="Wrap" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+      <DataGrid ItemsSource="{Binding Schedule}" Style="{StaticResource ListGrid}">
+        <DataGrid.Columns>
+          <DataGridTextColumn Width="50" Binding="{Binding Sequence}" Header="#" />
+          <DataGridTemplateColumn Width="110" Header="{x:Static res:Strings.Payroll_Month}">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <TextBlock>
+                  <Run Text="{Binding Month, Mode=OneWay}" />
+                  <Run Text="/" />
+                  <Run Text="{Binding Year, Mode=OneWay}" />
+                </TextBlock>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTextColumn Width="*" Binding="{Binding Principal, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.LoanForm_Principal}" />
+          <DataGridTextColumn Width="*" Binding="{Binding Interest, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.LoanForm_Interest}" />
+          <DataGridTextColumn Width="*" Binding="{Binding Amount, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.Loans_Installment}" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </DockPanel>
+  </DockPanel>
+</UserControl>

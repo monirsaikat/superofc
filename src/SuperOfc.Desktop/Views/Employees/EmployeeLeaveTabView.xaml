@@ -1,0 +1,54 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Employees.EmployeeLeaveTabView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <DockPanel>
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+    <TextBlock Margin="0,0,0,8" DockPanel.Dock="Top" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Leave_Balances}" />
+    <DataGrid
+        MaxHeight="240"
+        Margin="0,0,0,16"
+        DockPanel.Dock="Top"
+        ItemsSource="{Binding Balances}"
+        Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="*" Binding="{Binding LeaveType}" Header="{x:Static res:Strings.Leave_Type}" />
+        <DataGridTextColumn Width="80" Binding="{Binding Opening, StringFormat=0.#}" Header="{x:Static res:Strings.Leave_Opening}" />
+        <DataGridTextColumn Width="80" Binding="{Binding Accrued, StringFormat=0.#}" Header="{x:Static res:Strings.Leave_Accrued}" />
+        <DataGridTextColumn Width="80" Binding="{Binding Used, StringFormat=0.#}" Header="{x:Static res:Strings.Leave_Used}" />
+        <DataGridTextColumn Width="80" Binding="{Binding Adjusted, StringFormat=0.#}" Header="{x:Static res:Strings.Leave_Adjusted}" />
+        <DataGridTextColumn Width="90" Binding="{Binding Closing, StringFormat=0.#}" Header="{x:Static res:Strings.Leave_Available}" />
+        <DataGridTemplateColumn Width="100">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <ui:Button
+                  Padding="8,2"
+                  Command="{Binding DataContext.AdjustCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                  CommandParameter="{Binding}"
+                  Content="{x:Static res:Strings.Leave_Adjust}"
+                  Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVisibility}}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+      </DataGrid.Columns>
+    </DataGrid>
+    <TextBlock Margin="0,0,0,8" DockPanel.Dock="Top" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Leave_All}" />
+    <DataGrid ItemsSource="{Binding Requests}" Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="*" Binding="{Binding LeaveType}" Header="{x:Static res:Strings.Leave_Type}" />
+        <DataGridTextColumn Width="100" Binding="{Binding FromDate, StringFormat=d}" Header="{x:Static res:Strings.Leave_From}" />
+        <DataGridTextColumn Width="100" Binding="{Binding ToDate, StringFormat=d}" Header="{x:Static res:Strings.Leave_To}" />
+        <DataGridTextColumn Width="60" Binding="{Binding Days, StringFormat=0.#}" Header="{x:Static res:Strings.Leave_Days}" />
+        <DataGridTextColumn Width="100" Binding="{Binding Status, Converter={StaticResource EnumText}, ConverterParameter=LeaveStatus}" Header="{x:Static res:Strings.Leave_Status}" />
+        <DataGridTextColumn Width="*" Binding="{Binding Reason}" Header="{x:Static res:Strings.Leave_Reason}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

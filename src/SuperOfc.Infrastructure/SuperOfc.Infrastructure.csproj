@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>SuperOfc.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SuperOfc.Application\SuperOfc.Application.csproj" />
+    <ProjectReference Include="..\SuperOfc.DeviceBridge.Contracts\SuperOfc.DeviceBridge.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="ClosedXML" />
+    <PackageReference Include="Velopack" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="SuperOfc.Infrastructure.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Tax country packs (doc 03 R5): embedded so they ship inside the assembly. -->
+    <EmbeddedResource Include="Seed\Tax\*.json" LogicalName="TaxPack.%(Filename).json" />
+  </ItemGroup>
+</Project>

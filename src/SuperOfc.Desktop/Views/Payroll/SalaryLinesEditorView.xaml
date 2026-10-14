@@ -1,0 +1,99 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Payroll.SalaryLinesEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <!-- Component values on the left, the monthly preview on the right. -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="3*" MinWidth="320" />
+      <ColumnDefinition Width="16" />
+      <ColumnDefinition Width="2*" MinWidth="220" />
+    </Grid.ColumnDefinitions>
+    <ItemsControl Focusable="False" ItemsSource="{Binding Rows}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Grid Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition />
+              <ColumnDefinition Width="130" />
+            </Grid.ColumnDefinitions>
+            <CheckBox
+                MinWidth="0"
+                VerticalAlignment="Center"
+                IsChecked="{Binding IsIncluded}"
+                IsEnabled="{Binding IsBasic, Converter={StaticResource InverseBool}}"
+                ToolTip="{x:Static res:Strings.Salary_Include}" />
+            <StackPanel Grid.Column="1" Margin="4,0,8,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Name}" />
+              <TextBlock Style="{StaticResource Caption}">
+                <Run Text="{Binding Code, Mode=OneWay}" />
+                <Run Text="{Binding Hint, Mode=OneWay}" />
+              </TextBlock>
+            </StackPanel>
+            <ui:NumberBox
+                Grid.Column="2"
+                IsEnabled="{Binding IsIncluded}"
+                MaxDecimalPlaces="2"
+                Minimum="0"
+                SpinButtonPlacementMode="Hidden"
+                Value="{Binding Amount, UpdateSourceTrigger=PropertyChanged}"
+                Visibility="{Binding UsesAmount, Converter={StaticResource BoolToVisibility}}" />
+            <ui:NumberBox
+                Grid.Column="2"
+                IsEnabled="{Binding IsIncluded}"
+                MaxDecimalPlaces="2"
+                Maximum="1000"
+                Minimum="0"
+                PlaceholderText="%"
+                SpinButtonPlacementMode="Hidden"
+                Value="{Binding Rate, UpdateSourceTrigger=PropertyChanged}"
+                Visibility="{Binding UsesRate, Converter={StaticResource BoolToVisibility}}" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <Border
+        Grid.Column="2"
+        Padding="12"
+        VerticalAlignment="Top"
+        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+        CornerRadius="6">
+      <StackPanel>
+        <TextBlock Margin="0,0,0,8" FontWeight="SemiBold" Text="{x:Static res:Strings.Salary_MonthlyPreview}" />
+        <ItemsControl Focusable="False" ItemsSource="{Binding Preview}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Grid Margin="0,2">
+                <TextBlock Text="{Binding Name}" />
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Amount, Converter={StaticResource Money}, ConverterParameter=plain}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Separator Margin="0,8" />
+        <Grid Margin="0,2">
+          <TextBlock Text="{x:Static res:Strings.Payroll_Gross}" />
+          <TextBlock HorizontalAlignment="Right" Text="{Binding Gross, Converter={StaticResource Money}}" />
+        </Grid>
+        <Grid Margin="0,2">
+          <TextBlock Text="{x:Static res:Strings.Payroll_Deductions}" />
+          <TextBlock HorizontalAlignment="Right" Text="{Binding Deductions, Converter={StaticResource Money}}" />
+        </Grid>
+        <Grid Margin="0,2">
+          <TextBlock FontWeight="SemiBold" Text="{x:Static res:Strings.Payroll_Net}" />
+          <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding Net, Converter={StaticResource Money}}" />
+        </Grid>
+        <TextBlock
+            Margin="0,8,0,0"
+            Style="{StaticResource ErrorText}"
+            Text="{Binding Warnings}"
+            TextWrapping="Wrap"
+            Visibility="{Binding Warnings, Converter={StaticResource HasValueToVisibility}}" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

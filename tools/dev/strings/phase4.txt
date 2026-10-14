@@ -1,0 +1,219 @@
+# Shared
+App_ExportExcel=Export to Excel
+App_Open=Open
+App_SelectAll=Select all
+App_SelectNone=Select none
+EmpTab_Salary=Salary
+Settings_SalaryComponents=Salary components
+Settings_SalaryStructures=Salary structures
+
+# Enum text (EnumText converter)
+ComponentKind_Earning=Earning
+ComponentKind_Deduction=Deduction
+ComponentKind_EmployerContribution=Employer contribution
+ComponentCalc_Fixed=Fixed amount
+ComponentCalc_PercentOfBasic=% of basic
+ComponentCalc_PercentOfGross=% of gross
+ComponentCalc_Formula=Formula
+PayrollPeriodStatus_Open=Open
+PayrollPeriodStatus_Computed=Draft
+PayrollPeriodStatus_Locked=Finalized
+PayrollPeriodStatus_Paid=Paid
+PayrollRunStatus_Draft=Draft
+PayrollRunStatus_Finalized=Finalized
+PayrollRunStatus_Voided=Voided
+PaymentStatus_Unpaid=Unpaid
+PaymentStatus_Paid=Paid
+Adjustment_Earning=Add to pay
+Adjustment_Deduction=Deduct from pay
+
+# Settings > Salary components
+SalaryComponents_New=New component
+SalaryComponents_Intro=Components are the lines on a payslip. Percentages work on the basic salary or on gross; a formula can use numbers, + - * / ( ) and other component codes, for example BASIC * 0.1.
+SalaryComponents_Code=Code
+SalaryComponents_Name=Name
+SalaryComponents_Kind=Type
+SalaryComponents_Calc=Calculation
+SalaryComponents_DefaultAmount=Default monthly amount
+SalaryComponents_DefaultRate=Default percentage
+SalaryComponents_Formula=Formula
+SalaryComponents_FormulaHint=Amounts are monthly, in full currency units. Example: (BASIC + HRA) * 0.05
+SalaryComponents_IsBasic=This is the basic salary
+SalaryComponents_Taxable=Taxable
+SalaryComponents_Linked=Reduce for unpaid days
+SalaryComponents_Active=Active (switched-off components are not paid)
+SalaryComponents_TaxableShort=Taxable
+SalaryComponents_LinkedShort=Per day
+SalaryComponents_ActiveShort=Active
+SalaryComponents_DeleteTitle=Delete {0}?
+SalaryComponents_DeleteMessage=Past payslips keep their lines. A component used in a salary or structure cannot be deleted; switch it off instead.
+
+# Settings > Salary structures
+SalaryStructures_New=New structure
+SalaryStructures_Intro=A structure is a template: pick it when you set an employee's salary and only the basic needs typing.
+SalaryStructures_Name=Name
+SalaryStructures_Description=Description
+SalaryStructures_Components=Components
+SalaryStructures_SampleHint=Tick the components to include. The basic entered here is only a sample for the preview.
+SalaryStructures_DeleteTitle=Delete structure {0}?
+SalaryStructures_DeleteMessage=Salaries already made from this structure keep their amounts.
+
+# Salary editor and Employee > Salary
+Salary_Include=Include this component
+Salary_PercentOfBasic=% of basic
+Salary_PercentOfGross=% of gross
+Salary_MonthlyPreview=Monthly preview
+Salary_Current=Current salary (gross)
+Salary_None=No salary set yet. Payroll skips employees without a salary.
+Salary_New=New salary
+Salary_EffectiveFrom=Effective from
+Salary_Structure=Structure
+Salary_ApplyStructure=Use structure
+Salary_Note=Note
+Salary_History=Salary history
+Salary_From=From
+Salary_To=To
+Salary_Locked=In finalized payroll
+Salary_DeleteTitle=Delete the salary from {0}?
+Salary_DeleteMessage=The previous salary continues from that date.
+
+# Bulk revision
+Revision_Title=Salary revision
+Revision_StepEmployees=Employees
+Revision_StepChange=Change
+Revision_StepReview=Review
+Revision_SearchHint=Search name, code or department
+Revision_Selected=selected
+Revision_ChooseEmployees=Choose at least one employee.
+Revision_EnterChange=Enter a percentage and the date the new salary starts.
+Revision_Percent=Increase (%)
+Revision_AllFixed=Raise all fixed earnings, not only the basic
+Revision_AllFixedHint=Percent-of-basic components follow the basic automatically. Deductions never change.
+Revision_NoteHint=For example: Annual increment 2026
+Revision_Summary={0} salaries will change, {1} skipped. Monthly gross goes up by {2} in total.
+Revision_CurrentBasic=Basic now
+Revision_NewBasic=New basic
+Revision_CurrentGross=Gross now
+Revision_NewGross=New gross
+Revision_Problem=Skipped because
+Revision_Apply=Apply revision
+Revision_ConfirmTitle=Revise {0} salaries?
+Revision_ConfirmMessage=A new salary is added for each employee from the chosen date. Earlier salaries stay as history.
+Revision_Done={0} salaries revised.
+
+# Payroll page
+Payroll_Title=Payroll
+Payroll_RunFor=Run payroll for {0}
+Payroll_LockTitle=Finalized months are locked
+Payroll_LockedUntil=Attendance, leave and salary up to {0} cannot change. Void the latest payroll to edit them.
+Payroll_Empty=No payroll yet. Set salaries on each employee's Salary tab, then run payroll for last month.
+Payroll_Month=Month
+Payroll_Status=Status
+Payroll_Run=Run
+Payroll_Employees=Employees
+Payroll_Paid=Paid
+Payroll_Gross=Gross
+Payroll_Deductions=Deductions
+Payroll_Net=Net pay
+Payroll_ComputedAt=Computed
+Payroll_Days=Days
+Payroll_Payment=Payment
+Payroll_AllMonths=All months
+
+# Payroll run
+PayrollRun_Title=Payroll {0}
+PayrollRun_StepPrepare=Prepare
+PayrollRun_StepReview=Review
+PayrollRun_StepFinalize=Finalize
+PayrollRun_StepPay=Pay
+PayrollRun_NotComputed=Not computed yet.
+PayrollRun_Status=Run {0} · {1} · computed {2} by {3}
+PayrollRun_Compute=Compute
+PayrollRun_ComputedTitle=Payroll computed
+PayrollRun_Computed={0} payslips, gross {1}, net {2}. {3} with warnings.
+PayrollRun_Empty=Check the notes on the right, add one-off adjustments, then select Compute. You can compute again as often as needed until you finalize.
+PayrollRun_Readiness=Before you compute
+PayrollRun_NotEnded=This month has not ended. Payroll can be computed from {0}.
+PayrollRun_MissingPunches={0} days have a missing punch. Fix them on the Attendance page or they count as the policy says.
+PayrollRun_NoAdjustments=No one-off adjustments.
+PayrollRun_AdjustmentCount={0} one-off adjustments.
+PayrollRun_Adjustments=One-off adjustments
+PayrollRun_AdjustmentsHint=Bonus, arrears or a recovery for this month only. Compute again after changing them.
+PayrollRun_AddAdjustment=Add
+PayrollRun_AdjustmentName=Description
+PayrollRun_AdjustmentNameHint=For example: Festival bonus
+PayrollRun_Amount=Amount
+PayrollRun_AdjustmentRecompute=Saved. Compute again to include it.
+PayrollRun_Finalize=Finalize payroll
+PayrollRun_FinalizeTitle=Finalize payroll for {0}?
+PayrollRun_FinalizeMessage={0} payslips, net pay {1}. Attendance, leave and salaries for the month are locked afterwards.
+PayrollRun_Finalized=Payroll finalized.
+PayrollRun_Void=Void
+PayrollRun_VoidTitle=Void payroll for {0}?
+PayrollRun_VoidMessage=The payslips stay on record as voided and the month is unlocked so it can be computed again.
+PayrollRun_VoidReason=Reason
+PayrollRun_Voided=Payroll voided.
+PayrollRun_MarkPaid=Mark paid
+PayrollRun_MarkUnpaid=Mark unpaid
+PayrollRun_MarkPaidTitle=Mark {0} payslips as paid
+PayrollRun_PaidOn=Paid on
+PayrollRun_Reference=Reference
+PayrollRun_ReferenceHint=Optional: bank batch or cheque number.
+PayrollRun_MarkedPaid={0} payslips marked paid.
+PayrollRun_MarkedUnpaid={0} payslips marked unpaid.
+PayrollRun_CheckedHint=checked: actions apply to these only.
+PayrollRun_Payslips=Payslips PDF
+PayrollRun_PdfMerged=One file for everyone
+PayrollRun_PdfSplit=One file per employee
+PayrollRun_PdfFolder=Choose a folder for the payslips
+PayrollRun_BankSheet=Bank transfer sheet
+PayrollRun_CashSheet=Cash sheet
+PayrollRun_Exported={0} payslips exported.
+PayrollRun_Preview=Payslip
+
+# Register
+Register_Title=Payroll register
+Register_TitleFor=Payroll register {0}
+
+# Lock indicator on attendance and leave
+Lock_Attendance=Payroll covering this month is finalized. Days up to {0} cannot change; void that payroll to correct them.
+Lock_Leave=Payroll is finalized up to {0}. Leave on those dates cannot be added, approved or cancelled.
+
+# Settings > Policies > Payroll
+PolicyPay_Header=Payroll
+PolicyPay_Basis=Pay per day is based on
+PolicyPay_BasisCalendar=Calendar days in the month
+PolicyPay_BasisWorking=Working days in the month
+PolicyPay_BasisFixed30=A fixed 30-day month
+PolicyPay_BasisHint=Used to reduce pay for unpaid days and for joiners and leavers.
+PolicyPay_MidMonth=Salary change during a month
+PolicyPay_MidMonthSplit=Pay each salary for its own days
+PolicyPay_MidMonthLatest=Pay the newest salary for the whole month
+PolicyPay_MinimumNet=Minimum net pay
+PolicyPay_MinimumNetHint=A loan installment that would take net pay below this is skipped and moved to the end of the loan.
+PolicyPay_OtBase=Overtime hourly rate is based on
+PolicyPay_OtBasic=Basic salary
+PolicyPay_OtGross=Gross salary
+PolicyPay_OtMultiplier=Overtime pay × on working days
+PolicyPay_OtHolidayMultiplier=Overtime pay × on holidays and offs
+PolicyPay_Rounding=Round each payslip line
+PolicyPay_RoundTo=To
+PolicyPay_RoundHalfUp=Nearest (half up)
+PolicyPay_RoundHalfEven=Nearest (half to even)
+PolicyPay_RoundUp=Always up
+PolicyPay_RoundDown=Always down
+PolicyPay_StepCents=Cents (no rounding)
+PolicyPay_StepWhole=Whole units
+PolicyPay_StepTen=Tens
+
+# Settings > Policies > Loans
+PolicyLoan_Header=Loans and advances
+PolicyLoan_DefaultInterest=Interest on new loans
+PolicyLoan_Settlement=Interest when a loan is settled early
+PolicyLoan_SettleNone=No interest on the rest of the loan
+PolicyLoan_SettleProRata=Interest for the months elapsed only
+PolicyLoan_SettleFull=All remaining interest
+PolicyLoan_SoftLimit=Warn when a loan is more than this many months of gross pay
+PolicyLoan_SoftLimitHint=Only a warning on the new loan form; set 0 to turn it off.
+InterestMethod_None=No interest
+InterestMethod_FlatRate=Flat rate per year

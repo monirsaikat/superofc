@@ -1,0 +1,76 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Settings.AttendancePolicyEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Settings">
+  <Grid Margin="0,12,0,0">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition />
+      <ColumnDefinition Width="24" />
+      <ColumnDefinition />
+    </Grid.ColumnDefinitions>
+    <StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_Pairing}" />
+        <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:AttendancePolicyEditor.Pairings}" SelectedValue="{Binding PunchPairing}" SelectedValuePath="Value" />
+      </StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_Missing}" />
+        <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:AttendancePolicyEditor.MissingRules}" SelectedValue="{Binding MissingPunch}" SelectedValuePath="Value" />
+      </StackPanel>
+      <StackPanel Style="{StaticResource Field}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_DuplicateMinutes}" />
+        <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding DuplicatePunchMinutes}" />
+      </StackPanel>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_LateInstances}" TextWrapping="Wrap" />
+          <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding LateInstances}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_LateDeduct}" TextWrapping="Wrap" />
+          <ui:NumberBox MaxDecimalPlaces="1" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding LateDeductDays}" />
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+    <StackPanel Grid.Column="2">
+      <CheckBox Margin="0,0,0,8" Content="{x:Static res:Strings.PolicyAtt_Overtime}" IsChecked="{Binding OvertimeEnabled}" />
+      <StackPanel Style="{StaticResource Field}" IsEnabled="{Binding OvertimeEnabled}">
+        <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_OvertimeRounding}" />
+        <ui:NumberBox MaxDecimalPlaces="0" Minimum="1" SpinButtonPlacementMode="Hidden" Value="{Binding OvertimeRoundingMinutes}" />
+      </StackPanel>
+      <CheckBox Margin="0,0,0,8" Content="{x:Static res:Strings.PolicyAtt_OvertimeHolidays}" IsChecked="{Binding OvertimeOnHolidays}" IsEnabled="{Binding OvertimeEnabled}" />
+      <CheckBox Margin="0,0,0,8" Content="{x:Static res:Strings.PolicyAtt_OffsPaid}" IsChecked="{Binding WeeklyOffsPaid}" />
+      <CheckBox Content="{x:Static res:Strings.PolicyAtt_HolidaysPaid}" IsChecked="{Binding HolidaysPaid}" />
+    </StackPanel>
+    <Border
+        Grid.Row="1"
+        Grid.ColumnSpan="3"
+        Margin="0,12,0,0"
+        Padding="12"
+        Background="{DynamicResource ControlFillColorSecondaryBrush}"
+        CornerRadius="6">
+      <StackPanel>
+        <TextBlock Margin="0,0,0,8" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.PolicyAtt_Preview}" />
+        <WrapPanel>
+          <TextBlock Margin="0,0,6,0" VerticalAlignment="Center" Text="{x:Static res:Strings.PolicyAtt_PreviewIn}" />
+          <ui:TextBox Width="80" Margin="0,0,16,0" Text="{Binding SampleIn, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Margin="0,0,6,0" VerticalAlignment="Center" Text="{x:Static res:Strings.PolicyAtt_PreviewOut}" />
+          <ui:TextBox Width="80" Margin="0,0,16,0" Text="{Binding SampleOut, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding SampleResult}" />
+        </WrapPanel>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

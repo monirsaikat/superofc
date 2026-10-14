@@ -1,0 +1,106 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Payroll.SalaryComponentsSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Payroll">
+  <DockPanel>
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <TextBlock VerticalAlignment="Center" Style="{StaticResource SectionTitle}" Text="{Binding Title}" />
+      <ui:Button
+          HorizontalAlignment="Right"
+          Appearance="Primary"
+          Command="{Binding NewCommand}"
+          Content="{x:Static res:Strings.SalaryComponents_New}"
+          Icon="{ui:SymbolIcon Add20}"
+          Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
+    <TextBlock Margin="0,0,0,12" DockPanel.Dock="Top" Style="{StaticResource Caption}" Text="{x:Static res:Strings.SalaryComponents_Intro}" TextWrapping="Wrap" />
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+    <ui:Card
+        Width="360"
+        Margin="16,0,0,0"
+        Padding="{StaticResource CardPadding}"
+        VerticalAlignment="Top"
+        DockPanel.Dock="Right"
+        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="110" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_Name}" />
+            <ui:TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_Code}" />
+            <ui:TextBox CharacterCasing="Upper" Text="{Binding EditCode, UpdateSourceTrigger=PropertyChanged}" />
+          </StackPanel>
+        </Grid>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition />
+          </Grid.ColumnDefinitions>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_Kind}" />
+            <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:SalaryComponentsSettingsViewModel.Kinds}" SelectedValue="{Binding EditKind}" SelectedValuePath="Value" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_Calc}" />
+            <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:SalaryComponentsSettingsViewModel.Calcs}" SelectedValue="{Binding EditCalc}" SelectedValuePath="Value" />
+          </StackPanel>
+        </Grid>
+        <StackPanel Style="{StaticResource Field}" Visibility="{Binding EditUsesAmount, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_DefaultAmount}" />
+          <ui:NumberBox MaxDecimalPlaces="2" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditAmount}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}" Visibility="{Binding EditUsesRate, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_DefaultRate}" />
+          <ui:NumberBox MaxDecimalPlaces="2" Maximum="1000" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding EditRate}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}" Visibility="{Binding EditUsesFormula, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.SalaryComponents_Formula}" />
+          <ui:TextBox CharacterCasing="Upper" FontFamily="Consolas" Text="{Binding EditFormula, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Margin="0,4,0,0" Style="{StaticResource Caption}" Text="{x:Static res:Strings.SalaryComponents_FormulaHint}" TextWrapping="Wrap" />
+        </StackPanel>
+        <CheckBox Margin="0,0,0,6" Content="{x:Static res:Strings.SalaryComponents_IsBasic}" IsChecked="{Binding EditIsBasic}" />
+        <CheckBox Margin="0,0,0,6" Content="{x:Static res:Strings.SalaryComponents_Taxable}" IsChecked="{Binding EditTaxable}" />
+        <CheckBox Margin="0,0,0,6" Content="{x:Static res:Strings.SalaryComponents_Linked}" IsChecked="{Binding EditLinked}" />
+        <CheckBox Margin="{StaticResource FieldMargin}" Content="{x:Static res:Strings.SalaryComponents_Active}" IsChecked="{Binding EditActive}" />
+        <StackPanel Orientation="Horizontal">
+          <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveCommand}" Content="{x:Static res:Strings.App_Save}" />
+          <ui:Button Margin="0,0,8,0" Command="{Binding CancelEditCommand}" Content="{x:Static res:Strings.App_Cancel}" />
+          <ui:Button
+              Appearance="Danger"
+              Command="{Binding DeleteCommand}"
+              Content="{x:Static res:Strings.App_Delete}"
+              Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVisibility}}" />
+        </StackPanel>
+      </StackPanel>
+    </ui:Card>
+
+    <DataGrid ItemsSource="{Binding Components}" SelectedItem="{Binding Selected, Mode=TwoWay}" Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="90" Binding="{Binding Code}" Header="{x:Static res:Strings.SalaryComponents_Code}" />
+        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="{x:Static res:Strings.SalaryComponents_Name}" />
+        <DataGridTextColumn Width="140" Binding="{Binding Kind, Converter={StaticResource EnumText}, ConverterParameter=ComponentKind}" Header="{x:Static res:Strings.SalaryComponents_Kind}" />
+        <DataGridTextColumn Width="140" Binding="{Binding Calc, Converter={StaticResource EnumText}, ConverterParameter=ComponentCalc}" Header="{x:Static res:Strings.SalaryComponents_Calc}" />
+        <DataGridCheckBoxColumn Width="70" Binding="{Binding IsTaxable}" Header="{x:Static res:Strings.SalaryComponents_TaxableShort}" />
+        <DataGridCheckBoxColumn Width="80" Binding="{Binding IsAttendanceLinked}" Header="{x:Static res:Strings.SalaryComponents_LinkedShort}" />
+        <DataGridCheckBoxColumn Width="60" Binding="{Binding IsActive}" Header="{x:Static res:Strings.SalaryComponents_ActiveShort}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

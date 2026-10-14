@@ -1,0 +1,100 @@
+{
+  "period": "2026-03",
+  "employment": {
+    "from": "2025-01-01",
+    "to": null
+  },
+  "overtimeEligible": true,
+  "weeklyOffs": [
+    "Friday",
+    "Saturday"
+  ],
+  "components": [
+    {
+      "code": "BASIC",
+      "name": "Basic salary",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "isBasic": true,
+      "attendanceLinked": true,
+      "order": 1
+    },
+    {
+      "code": "HRA",
+      "name": "House rent",
+      "kind": "Earning",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 2
+    },
+    {
+      "code": "MEDICAL",
+      "name": "Medical",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": false,
+      "order": 3
+    },
+    {
+      "code": "CONV",
+      "name": "Conveyance",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "attendanceLinked": true,
+      "order": 4
+    },
+    {
+      "code": "PF",
+      "name": "Provident fund",
+      "kind": "Deduction",
+      "calc": "PercentOfBasic",
+      "attendanceLinked": true,
+      "order": 10
+    }
+  ],
+  "segments": [
+    {
+      "from": "2025-01-01",
+      "to": null,
+      "lines": {
+        "BASIC": 30000,
+        "HRA": {
+          "rate": 50
+        },
+        "MEDICAL": 3000,
+        "CONV": 1500,
+        "PF": {
+          "rate": 10
+        }
+      }
+    }
+  ],
+  "note": "WorkingDays: 23 working days in March; 2 unpaid days leave 21/23.",
+  "policy": {
+    "prorateBasis": "WorkingDays"
+  },
+  "days": {
+    "2026-03-10": {
+      "status": "Leave",
+      "paid": false
+    },
+    "2026-03-11": {
+      "status": "Leave",
+      "paid": false
+    }
+  },
+  "expected": {
+    "payableDays": 29,
+    "gross": 45457,
+    "deductions": 2739,
+    "net": 42718,
+    "lines": {
+      "BASIC": 27391,
+      "HRA": 13696,
+      "MEDICAL": 3000,
+      "CONV": 1370,
+      "PF": 2739
+    }
+  },
+  "name": "11-working-days-basis"
+}

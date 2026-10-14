@@ -1,0 +1,25 @@
+# Reports page
+Reports_Title=Reports
+Reports_Run=Show report
+Reports_AllDepartments=All departments
+Reports_AllLeaveTypes=All leave types
+Reports_Status={0} · {1} rows · ready in {2:0.0} s
+Reports_Empty=Choose a report on the left, set the choices and select Show report.
+
+# Dashboard figures
+Dashboard_Payroll=Payroll {0}
+Dashboard_PayrollNotStarted=Not started
+Dashboard_PayrollDraft=Draft ready
+Dashboard_PayrollFinalized=Finalized
+Dashboard_PayrollPaid=Paid
+Dashboard_PayrollDetail=Net pay {0} for {1} employees
+Dashboard_Loans=Loans outstanding
+Dashboard_LoansDetail={0} repaying · {1} waiting for approval
+Dashboard_Tax=Tax
+Dashboard_TaxMissing=No rules
+Dashboard_TaxMissingDetail=Payroll deducts no tax this fiscal year
+Dashboard_Devices=Devices
+Dashboard_DevicesOk={0} of {1} OK
+Dashboard_UnlinkedPunches={0} punches from unknown users
+Dashboard_Documents=Documents expiring
+Dashboard_DocumentsDetail=Expired or expiring within 30 days

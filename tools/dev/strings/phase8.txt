@@ -1,0 +1,18 @@
+# Phase 8: literal texts moved to resources
+Backup_File=File
+Reports_Pdf=PDF
+Reports_Excel=Excel
+
+# About: export
+Settings_DiagnosticsSaved=Diagnostics saved
+Settings_ExportAllData=Export all data
+Settings_ExportAllDataPick=Choose where to save the export
+Settings_ExportAllDataDone={0:N0} rows exported in {1:0.0} s
+Settings_ExportHint=Diagnostics holds recent logs and versions for support, without salaries or passwords. Export all data saves every table as Excel and JSON, without passwords or device keys.
+
+# Backup types
+BackupType_Auto=Daily
+BackupType_Manual=Manual
+BackupType_PreMigration=Before update
+BackupType_PrePayroll=Before payroll
+BackupType_PreRestore=Before restore

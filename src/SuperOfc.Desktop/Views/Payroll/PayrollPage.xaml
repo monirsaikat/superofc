@@ -1,0 +1,88 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Payroll.PayrollPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <DockPanel Margin="{StaticResource PagePadding}">
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <TextBlock Style="{StaticResource PageTitle}" Text="{Binding Title}" />
+      <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+        <ui:Button
+            Margin="0,0,8,0"
+            Command="{Binding RevisionCommand}"
+            Content="{x:Static res:Strings.Revision_Title}"
+            Icon="{ui:SymbolIcon ArrowTrendingLines20}"
+            Visibility="{Binding CanRun, Converter={StaticResource BoolToVisibility}}" />
+        <ui:Button
+            Appearance="Primary"
+            Command="{Binding RunNextCommand}"
+            Content="{Binding NextText}"
+            Icon="{ui:SymbolIcon Play20}"
+            Visibility="{Binding CanRun, Converter={StaticResource BoolToVisibility}}" />
+      </StackPanel>
+    </Grid>
+    <ui:InfoBar
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        IsClosable="False"
+        IsOpen="True"
+        Message="{Binding LockText}"
+        Severity="Informational"
+        Title="{x:Static res:Strings.Payroll_LockTitle}"
+        Visibility="{Binding LockText, Converter={StaticResource HasValueToVisibility}}" />
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+    <Grid>
+      <DataGrid ItemsSource="{Binding Periods}" SelectedItem="{Binding Selected, Mode=TwoWay}" Style="{StaticResource ListGrid}">
+        <DataGrid.InputBindings>
+          <MouseBinding Command="{Binding OpenCommand}" Gesture="LeftDoubleClick" />
+          <KeyBinding Key="Enter" Command="{Binding OpenCommand}" />
+        </DataGrid.InputBindings>
+        <DataGrid.Columns>
+          <DataGridTextColumn Width="160" Binding="{Binding FirstDay, StringFormat=MMMM yyyy}" Header="{x:Static res:Strings.Payroll_Month}" />
+          <DataGridTemplateColumn Width="130" Header="{x:Static res:Strings.Payroll_Status}">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <Border HorizontalAlignment="Left" Background="{Binding Status, Converter={StaticResource PayrollBrush}}" Style="{StaticResource Badge}">
+                  <TextBlock Foreground="White" Text="{Binding Status, Converter={StaticResource EnumText}, ConverterParameter=PayrollPeriodStatus}" />
+                </Border>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTextColumn Width="70" Binding="{Binding RunNumber}" Header="{x:Static res:Strings.Payroll_Run}" />
+          <DataGridTextColumn Width="100" Binding="{Binding EmployeeCount}" Header="{x:Static res:Strings.Payroll_Employees}" />
+          <DataGridTextColumn Width="100" Binding="{Binding PaidCount}" Header="{x:Static res:Strings.Payroll_Paid}" />
+          <DataGridTextColumn Width="150" Binding="{Binding Gross, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.Payroll_Gross}" />
+          <DataGridTextColumn Width="150" Binding="{Binding Net, Converter={StaticResource Money}, ConverterParameter=plain}" Header="{x:Static res:Strings.Payroll_Net}" />
+          <DataGridTextColumn Width="*" Binding="{Binding ComputedAtUtc, Converter={StaticResource LocalTime}, StringFormat=g}" Header="{x:Static res:Strings.Payroll_ComputedAt}" />
+          <DataGridTemplateColumn Width="100">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <ui:Button
+                    Padding="8,2"
+                    Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                    CommandParameter="{Binding}"
+                    Content="{x:Static res:Strings.App_Open}" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+        </DataGrid.Columns>
+      </DataGrid>
+      <TextBlock
+          MaxWidth="460"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Style="{StaticResource BodyText}"
+          Text="{x:Static res:Strings.Payroll_Empty}"
+          TextAlignment="Center"
+          TextWrapping="Wrap"
+          Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
+  </DockPanel>
+</UserControl>

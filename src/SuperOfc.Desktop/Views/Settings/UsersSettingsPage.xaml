@@ -1,0 +1,80 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Settings.UsersSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Settings">
+  <DockPanel>
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <TextBlock Style="{StaticResource SectionTitle}" Text="{Binding Title}" />
+      <ui:Button
+          HorizontalAlignment="Right"
+          Appearance="Primary"
+          Command="{Binding NewUserCommand}"
+          Content="{x:Static res:Strings.Users_New}"
+          Icon="{ui:SymbolIcon PersonAdd20}" />
+    </Grid>
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+    <ui:Card
+        Width="320"
+        Margin="16,0,0,0"
+        Padding="{StaticResource CardPadding}"
+        VerticalAlignment="Top"
+        DockPanel.Dock="Right"
+        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+      <StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Users_Username}" />
+          <ui:TextBox IsEnabled="{Binding IsNew}" Text="{Binding EditUsername, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Users_DisplayName}" />
+          <ui:TextBox Text="{Binding EditDisplayName, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Users_Role}" />
+          <ComboBox ItemsSource="{x:Static vm:UsersSettingsViewModel.Roles}" SelectedItem="{Binding EditRole}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}" Visibility="{Binding IsNew, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Login_Password}" />
+          <ui:PasswordBox Password="{Binding EditPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Margin="0,4,0,0" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Setup_PasswordHint}" />
+        </StackPanel>
+        <CheckBox
+            Margin="{StaticResource FieldMargin}"
+            Content="{x:Static res:Strings.Users_Active}"
+            IsChecked="{Binding EditActive}"
+            Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVisibility}}" />
+        <StackPanel Orientation="Horizontal">
+          <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveUserCommand}" Content="{x:Static res:Strings.App_Save}" />
+          <ui:Button Margin="0,0,8,0" Command="{Binding CancelEditCommand}" Content="{x:Static res:Strings.App_Cancel}" />
+        </StackPanel>
+        <ui:Button
+            Margin="0,12,0,0"
+            Appearance="Transparent"
+            Command="{Binding ResetPasswordCommand}"
+            Content="{x:Static res:Strings.Users_ResetPassword}"
+            Icon="{ui:SymbolIcon Key20}"
+            Visibility="{Binding IsNew, Converter={StaticResource InverseBoolToVisibility}}" />
+      </StackPanel>
+    </ui:Card>
+
+    <DataGrid ItemsSource="{Binding Users}" SelectedItem="{Binding Selected, Mode=TwoWay}" Style="{StaticResource ListGrid}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="*" Binding="{Binding Username}" Header="{x:Static res:Strings.Users_Username}" />
+        <DataGridTextColumn Width="*" Binding="{Binding DisplayName}" Header="{x:Static res:Strings.Users_DisplayName}" />
+        <DataGridTextColumn Width="110" Binding="{Binding Role}" Header="{x:Static res:Strings.Users_Role}" />
+        <DataGridCheckBoxColumn Width="70" Binding="{Binding IsActive}" Header="{x:Static res:Strings.Users_Active}" />
+        <DataGridCheckBoxColumn Width="100" Binding="{Binding IsLockedOut}" Header="{x:Static res:Strings.Users_LockedOut}" />
+        <DataGridTextColumn Width="150" Binding="{Binding LastLoginUtc, StringFormat=g}" Header="{x:Static res:Strings.Users_LastLogin}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

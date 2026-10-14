@@ -1,0 +1,85 @@
+# Enum text
+ExemptionKind_Fixed=Fixed amount
+ExemptionKind_PercentOfComponent=Share of a component
+ExemptionKind_PercentOfIncome=Share of income
+
+# Tax page
+Tax_Title=Tax
+Tax_FiscalYear=Fiscal year
+Tax_RulesTab=Rules
+Tax_ProfilesTab=Employee declarations
+Tax_SummaryTab=Tax deducted
+Tax_NoRules=This fiscal year has no tax rules, so payroll deducts no tax. Start from a country pack or enter the rules yourself.
+Tax_NewRules=Enter rules
+Tax_FromPack=Start from pack
+Tax_RulesHint=Rules are kept per fiscal year. When finalized payroll has used them, saving a change adds a new version from the next open month, so past payslips never change.
+Tax_RuleName=Name
+Tax_Country=Country
+Tax_EffectiveFrom=Applies from
+Tax_Used=Used by payroll
+Tax_DeleteTitle=Delete {0}?
+Tax_DeleteMessage=Payroll will stop deducting tax for these months until rules are added again.
+Tax_ProfilesHint=Category, declared investment and income from a previous employer for this fiscal year. Exempt employees pay no tax through payroll.
+Tax_Category=Category
+Tax_Investment=Declared investment
+Tax_PriorIncome=Previous employer income
+Tax_PriorTax=Previous employer tax
+Tax_Exempt=Exempt
+Tax_Unsaved=Not saved yet
+Tax_ProfilesSaved={0} declarations saved
+Tax_StatementPdf=Statement PDF
+Tax_TaxId=Tax ID
+Tax_Months=Months
+Tax_Month=Month
+Tax_Taxable=Taxable pay
+Tax_Deducted=Tax deducted
+Tax_AnnualTax=Projected yearly tax
+Tax_SummaryTotals={0} employees · taxable pay {1} · tax deducted {2}
+Tax_SummaryEmpty=Tax appears here once payroll for this fiscal year is finalized.
+
+# Rules editor
+TaxRules_NewTitle=New tax rules
+TaxRules_EditTitle=Tax rules
+TaxRules_DefaultName=Income tax {0}
+TaxRules_EffectiveFrom=Applies from {0}.
+TaxRules_UsedNotice=Finalized payroll used these rules. Saving keeps them for those months and adds a new version from the next open month.
+TaxRules_VersionAdded=Saved as a new version
+TaxRules_Slabs=Slabs
+TaxRules_SlabsHint=Yearly income bands in order. Leave the width of the last band empty: it covers the rest of the income.
+TaxRules_AddSlab=Add slab
+TaxRules_Width=Width (yearly)
+TaxRules_Rate=Rate %
+TaxRules_Categories=Categories with a larger tax-free slab
+TaxRules_CategoriesHint=For example women or senior citizens. The amount replaces the width of the first slab for that category.
+TaxRules_AddCategory=Add category
+TaxRules_NewCategory=New category
+TaxRules_FirstSlab=Tax-free first slab
+TaxRules_Exemptions=Exemptions
+TaxRules_ExemptionsHint=Income that is not taxed, as a fixed yearly amount or a share of income or of one salary component (by its code), with an optional cap.
+TaxRules_AddExemption=Add exemption
+TaxRules_NewExemption=New exemption
+TaxRules_Kind=Kind
+TaxRules_Component=Component
+TaxRules_Cap=Cap
+TaxRules_Other=Rebate, minimum and rounding
+TaxRules_HasRebate=Investment rebate
+TaxRules_RebatePercent=Rebate % of investment
+TaxRules_RebateShare=Investment allowed, % of income
+TaxRules_RebateMax=Largest rebate
+TaxRules_NoLimit=No limit
+TaxRules_MinimumTax=Minimum yearly tax
+TaxRules_RoundingStep=Round monthly tax up to
+TaxRules_Trial=Quick check
+TaxRules_TrialHint=Works out a full year's tax with the rules as entered. Nothing is saved.
+TaxRules_TrialIncome=Yearly taxable income
+TaxRules_Calculate=Calculate
+TaxRules_TrialResult=Yearly tax {0}, about {1} a month
+
+# Employee tab
+EmpTab_Tax=Tax
+EmpTax_ProjectionTitle=Tax for {0}
+EmpTax_Projection=About {0} this month, {1} for the year ({2}, {3}).
+EmpTax_Exempt=This employee is exempt this fiscal year; payroll deducts no tax.
+EmpTax_HowWorkedOut=How it is worked out
+EmpTax_Totals=Fiscal year {0}: taxable pay {1}, tax deducted {2}
+EmpTax_None=No tax has been deducted this fiscal year yet.

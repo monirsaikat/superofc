@@ -1,0 +1,217 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Attendance.AttendancePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Attendance">
+  <DockPanel Margin="{StaticResource PagePadding}">
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <TextBlock Style="{StaticResource PageTitle}" Text="{Binding Title}" />
+      <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+        <ui:Button
+            Margin="0,0,8,0"
+            Command="{Binding OpenPunchLogCommand}"
+            Content="{x:Static res:Strings.Attendance_PunchLog}"
+            Icon="{ui:SymbolIcon List20}" />
+        <ui:Button
+            Margin="0,0,8,0"
+            Command="{Binding ExportCommand}"
+            Content="{x:Static res:Strings.Attendance_Export}"
+            Icon="{ui:SymbolIcon ArrowDownload20}" />
+        <ui:Button
+            Appearance="Primary"
+            Command="{Binding RecomputeCommand}"
+            Content="{x:Static res:Strings.Attendance_Recompute}"
+            Icon="{ui:SymbolIcon ArrowClockwise20}"
+            Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}" />
+      </StackPanel>
+    </Grid>
+
+    <ui:InfoBar
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        IsClosable="False"
+        IsOpen="True"
+        Message="{Binding LockText}"
+        Severity="Informational"
+        Title="{x:Static res:Strings.Payroll_LockTitle}"
+        Visibility="{Binding LockText, Converter={StaticResource HasValueToVisibility}}" />
+    <WrapPanel Margin="0,0,0,8" DockPanel.Dock="Top">
+      <ComboBox Width="160" Margin="0,0,8,0" ItemStringFormat="MMMM yyyy" ItemsSource="{Binding Months}" SelectedItem="{Binding Month}" />
+      <ComboBox Width="200" Margin="0,0,8,0" DisplayMemberPath="Name" ItemsSource="{Binding Departments}" SelectedValue="{Binding DepartmentId}" SelectedValuePath="Id" />
+      <ui:TextBox
+          Width="240"
+          Icon="{ui:SymbolIcon Search20}"
+          PlaceholderText="{x:Static res:Strings.Attendance_SearchHint}"
+          Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
+    </WrapPanel>
+    <TextBlock Margin="0,0,0,8" DockPanel.Dock="Top" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_Legend}" />
+    <TextBlock
+        Margin="0,0,0,8"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{x:Static res:Strings.Attendance_Missing}"
+        Visibility="{Binding HasMissingDays, Converter={StaticResource BoolToVisibility}}" />
+
+    <!-- Day panel -->
+    <ui:Card
+        Width="340"
+        Margin="12,0,0,0"
+        Padding="{StaticResource CardPadding}"
+        VerticalAlignment="Stretch"
+        VerticalContentAlignment="Top"
+        DockPanel.Dock="Right"
+        Visibility="{Binding IsDayOpen, Converter={StaticResource BoolToVisibility}}">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <Grid>
+            <StackPanel>
+              <TextBlock Style="{StaticResource SectionTitle}" Text="{Binding Day.EmployeeName}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Style="{StaticResource Caption}">
+                <Run Text="{Binding Day.EmployeeCode, Mode=OneWay}" />
+                <Run Text=" · " />
+                <Run Text="{Binding Day.Date, Mode=OneWay, StringFormat=dddd d MMMM}" />
+              </TextBlock>
+            </StackPanel>
+            <ui:Button
+                Padding="6"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Appearance="Transparent"
+                Command="{Binding CloseDayCommand}"
+                Icon="{ui:SymbolIcon Dismiss16}"
+                ToolTip="{x:Static res:Strings.Attendance_Close}" />
+          </Grid>
+
+          <Border
+              Margin="0,10,0,10"
+              Padding="8,4"
+              HorizontalAlignment="Left"
+              Background="{Binding Day.Status, Converter={StaticResource StatusBrush}}"
+              CornerRadius="4">
+            <TextBlock Foreground="White" Text="{Binding Day.Status, Converter={StaticResource EnumText}, ConverterParameter=AttStatus}" />
+          </Border>
+          <TextBlock Margin="0,0,0,8" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_Corrected}" Visibility="{Binding Day.IsManuallyCorrected, Converter={StaticResource BoolToVisibility}}" />
+
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="120" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition />
+              <RowDefinition />
+              <RowDefinition />
+              <RowDefinition />
+              <RowDefinition />
+              <RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_Shift}" />
+            <TextBlock Grid.Column="1" Text="{Binding Day.ShiftName}" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_FirstIn}" />
+            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Day.FirstIn, StringFormat=HH:mm}" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_LastOut}" />
+            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Day.LastOut, StringFormat=HH:mm}" />
+            <TextBlock Grid.Row="3" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_Worked}" />
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Day.WorkedMinutes, StringFormat={}{0} min}" />
+            <TextBlock Grid.Row="4" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_LateMinutes}" />
+            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Day.LateMinutes}" />
+            <TextBlock Grid.Row="5" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Attendance_OvertimeMinutes}" />
+            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Day.OvertimeMinutes}" />
+          </Grid>
+
+          <TextBlock Margin="0,0,0,4" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Attendance_Punches}" />
+          <ItemsControl Margin="0,0,0,8" ItemsSource="{Binding DayPunches}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,2">
+                  <TextBlock VerticalAlignment="Center">
+                    <Run Text="{Binding LocalTime, Mode=OneWay, StringFormat=ddd HH:mm}" />
+                    <Run Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Source, Mode=OneWay, Converter={StaticResource EnumText}, ConverterParameter=Source}" />
+                  </TextBlock>
+                  <ui:Button
+                      Padding="4"
+                      HorizontalAlignment="Right"
+                      Appearance="Transparent"
+                      Command="{Binding DataContext.DeletePunchCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                      CommandParameter="{Binding}"
+                      Icon="{ui:SymbolIcon Delete16}"
+                      ToolTip="{x:Static res:Strings.App_Delete}"
+                      Visibility="{Binding CanDelete, Converter={StaticResource BoolToVisibility}}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <StackPanel Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Margin="0,8,0,6" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Attendance_AddPunch}" />
+            <Grid Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <ui:TextBox PlaceholderText="09:00" Text="{Binding NewPunchTime, UpdateSourceTrigger=PropertyChanged}" />
+              <ui:TextBox Grid.Column="2" PlaceholderText="{x:Static res:Strings.Attendance_Reason}" Text="{Binding NewPunchReason, UpdateSourceTrigger=PropertyChanged}" />
+              <ui:Button Grid.Column="4" Command="{Binding AddPunchCommand}" Icon="{ui:SymbolIcon Add16}" />
+            </Grid>
+            <TextBlock Style="{StaticResource ErrorText}" Text="{Binding ErrorMessage}" Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+
+            <TextBlock Margin="0,8,0,6" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.Attendance_Correct}" />
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Attendance_Status}" />
+              <ComboBox DisplayMemberPath="Text" ItemsSource="{x:Static vm:AttendanceViewModel.CorrectionStatuses}" SelectedValue="{Binding CorrectStatus}" SelectedValuePath="Value" />
+            </StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <StackPanel Style="{StaticResource Field}">
+                <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Attendance_LateMinutes}" />
+                <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding CorrectLate}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+                <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Attendance_OvertimeMinutes}" />
+                <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding CorrectOvertime}" />
+              </StackPanel>
+            </Grid>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Attendance_Reason}" />
+              <ui:TextBox Text="{Binding CorrectReason, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding SaveCorrectionCommand}" Content="{x:Static res:Strings.Attendance_SaveCorrection}" />
+              <ui:Button Command="{Binding ResetCorrectionCommand}" Content="{x:Static res:Strings.Attendance_ResetCorrection}" Visibility="{Binding Day.IsManuallyCorrected, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </ui:Card>
+
+    <DataGrid
+        x:Name="Sheet"
+        CanUserReorderColumns="False"
+        CanUserSortColumns="False"
+        FrozenColumnCount="2"
+        ItemsSource="{Binding Rows}"
+        SelectedCellsChanged="OnSelectedCellsChanged"
+        SelectionUnit="Cell"
+        Style="{StaticResource ListGrid}">
+      <DataGrid.Resources>
+        <Style x:Key="DayCell" TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+          <Setter Property="Padding" Value="0" />
+          <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+      </DataGrid.Resources>
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="80" Binding="{Binding Code}" Header="{x:Static res:Strings.Employees_Code}" />
+        <DataGridTextColumn Width="180" Binding="{Binding Name}" Header="{x:Static res:Strings.Employees_Name}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

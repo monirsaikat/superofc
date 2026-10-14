@@ -1,0 +1,17 @@
+{
+  "devices": [
+    {
+      "ip": "192.168.1.201",
+      "serial": "DEMO0001",
+      "name": "Front door (demo)",
+      "clockOffsetMinutes": 4,
+      "users": [
+        { "deviceUserId": "1", "name": "Demo One" },
+        { "deviceUserId": "2", "name": "Demo Two" },
+        { "deviceUserId": "900", "name": "Visitor card" }
+      ],
+      "generateLogs": { "count": 400, "start": "2026-09-01T08:55:00", "users": 3, "minutesApart": 61 }
+    },
+    { "ip": "192.168.1.202", "serial": "DEMO0002", "name": "Back gate (demo)", "commKey": 1234 }
+  ]
+}

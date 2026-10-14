@@ -1,0 +1,23 @@
+{
+  "id": "xx-sample",
+  "name": "Sample rules (not a real country)",
+  "countryCode": "XX",
+  "note": "Synthetic rules to try the tax engine. Replace them with your country's rules before relying on the figures (doc 10 Q1).",
+  "rules": {
+    "slabs": [
+      { "width": 350000, "ratePercent": 0 },
+      { "width": 100000, "ratePercent": 5 },
+      { "width": 400000, "ratePercent": 10 },
+      { "width": 500000, "ratePercent": 15 },
+      { "width": 500000, "ratePercent": 20 },
+      { "width": null, "ratePercent": 25 }
+    ],
+    "firstSlabByCategory": { "Female": 400000, "Senior": 400000, "Disabled": 475000 },
+    "exemptions": [
+      { "name": "One third of income", "kind": "PercentOfIncome", "percent": 33.3333, "cap": 450000 }
+    ],
+    "rebate": { "percent": 15, "maxInvestmentPercentOfIncome": 20, "maxRebate": 1000000 },
+    "minimumTax": 5000,
+    "roundingStep": 1
+  }
+}

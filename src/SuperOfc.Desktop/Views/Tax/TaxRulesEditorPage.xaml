@@ -1,0 +1,229 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Tax.TaxRulesEditorPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources"
+    xmlns:vm="clr-namespace:SuperOfc.Desktop.ViewModels.Tax">
+  <DockPanel Margin="{StaticResource PagePadding}">
+    <TextBlock Margin="0,0,0,12" DockPanel.Dock="Top" Style="{StaticResource PageTitle}" Text="{Binding Title}" />
+    <ui:InfoBar
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        IsClosable="False"
+        IsOpen="True"
+        Message="{Binding VersionNotice}"
+        Severity="Informational"
+        Visibility="{Binding VersionNotice, Converter={StaticResource HasValueToVisibility}}" />
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        TextWrapping="Wrap"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+    <StackPanel Margin="0,12,0,0" DockPanel.Dock="Bottom" Orientation="Horizontal">
+      <ui:Button
+          Margin="0,0,8,0"
+          Appearance="Primary"
+          Command="{Binding SaveCommand}"
+          Content="{x:Static res:Strings.App_Save}"
+          Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}" />
+      <ui:Button Command="{Binding CancelCommand}" Content="{x:Static res:Strings.App_Back}" />
+    </StackPanel>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="3*" MinWidth="420" />
+          <ColumnDefinition Width="24" />
+          <ColumnDefinition Width="2*" MinWidth="300" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Rules -->
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition Width="90" />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Tax_RuleName}" />
+              <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Tax_Country}" />
+              <ui:TextBox MaxLength="2" Text="{Binding CountryCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+            </StackPanel>
+            <StackPanel Grid.Column="4" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Tax_FiscalYear}" />
+              <ui:TextBox IsReadOnly="True" Text="{Binding FiscalYearText, Mode=OneWay}" />
+            </StackPanel>
+          </Grid>
+          <TextBlock Margin="0,0,0,8" Style="{StaticResource Caption}" Text="{Binding EffectiveText}" Visibility="{Binding EffectiveText, Converter={StaticResource HasValueToVisibility}}" />
+
+          <!-- Slabs -->
+          <Grid Margin="0,8,0,4">
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.TaxRules_Slabs}" />
+            <ui:Button HorizontalAlignment="Right" Padding="8,2" Command="{Binding AddSlabCommand}" Content="{x:Static res:Strings.TaxRules_AddSlab}" Icon="{ui:SymbolIcon Add16}" />
+          </Grid>
+          <TextBlock Margin="0,0,0,6" Style="{StaticResource Caption}" Text="{x:Static res:Strings.TaxRules_SlabsHint}" TextWrapping="Wrap" />
+          <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" ItemsSource="{Binding Slabs}">
+            <DataGrid.Columns>
+              <DataGridTextColumn Width="*" Binding="{Binding Width, TargetNullValue='', StringFormat=N0}" Header="{x:Static res:Strings.TaxRules_Width}" />
+              <DataGridTextColumn Width="120" Binding="{Binding Rate}" Header="{x:Static res:Strings.TaxRules_Rate}" />
+              <DataGridTemplateColumn Width="44">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <ui:Button
+                        Padding="4"
+                        Command="{Binding DataContext.RemoveSlabCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                        CommandParameter="{Binding}"
+                        Icon="{ui:SymbolIcon Delete16}"
+                        ToolTip="{x:Static res:Strings.App_Delete}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+
+          <!-- Categories -->
+          <Grid Margin="0,16,0,4">
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.TaxRules_Categories}" />
+            <ui:Button HorizontalAlignment="Right" Padding="8,2" Command="{Binding AddCategoryCommand}" Content="{x:Static res:Strings.TaxRules_AddCategory}" Icon="{ui:SymbolIcon Add16}" />
+          </Grid>
+          <TextBlock Margin="0,0,0,6" Style="{StaticResource Caption}" Text="{x:Static res:Strings.TaxRules_CategoriesHint}" TextWrapping="Wrap" />
+          <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" ItemsSource="{Binding CategoryRows}">
+            <DataGrid.Columns>
+              <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="{x:Static res:Strings.Tax_Category}" />
+              <DataGridTextColumn Width="180" Binding="{Binding FirstSlab, StringFormat=N0}" Header="{x:Static res:Strings.TaxRules_FirstSlab}" />
+              <DataGridTemplateColumn Width="44">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <ui:Button
+                        Padding="4"
+                        Command="{Binding DataContext.RemoveCategoryCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                        CommandParameter="{Binding}"
+                        Icon="{ui:SymbolIcon Delete16}"
+                        ToolTip="{x:Static res:Strings.App_Delete}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+
+          <!-- Exemptions -->
+          <Grid Margin="0,16,0,4">
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.TaxRules_Exemptions}" />
+            <ui:Button HorizontalAlignment="Right" Padding="8,2" Command="{Binding AddExemptionCommand}" Content="{x:Static res:Strings.TaxRules_AddExemption}" Icon="{ui:SymbolIcon Add16}" />
+          </Grid>
+          <TextBlock Margin="0,0,0,6" Style="{StaticResource Caption}" Text="{x:Static res:Strings.TaxRules_ExemptionsHint}" TextWrapping="Wrap" />
+          <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" ItemsSource="{Binding Exemptions}">
+            <DataGrid.Columns>
+              <DataGridTextColumn Width="*" MinWidth="120" Binding="{Binding Name}" Header="{x:Static res:Strings.Tax_RuleName}" />
+              <DataGridComboBoxColumn
+                  Width="170"
+                  DisplayMemberPath="Text"
+                  Header="{x:Static res:Strings.TaxRules_Kind}"
+                  ItemsSource="{x:Static vm:TaxRulesEditorViewModel.ExemptionKinds}"
+                  SelectedValueBinding="{Binding Kind}"
+                  SelectedValuePath="Value" />
+              <DataGridTextColumn Width="100" Binding="{Binding Amount, StringFormat=N0}" Header="{x:Static res:Strings.Loans_Amount}" />
+              <DataGridTextColumn Width="70" Binding="{Binding Percent, StringFormat=0.##}" Header="%" />
+              <DataGridTextColumn Width="90" Binding="{Binding ComponentCode}" Header="{x:Static res:Strings.TaxRules_Component}" />
+              <DataGridTextColumn Width="100" Binding="{Binding Cap, TargetNullValue='', StringFormat=N0}" Header="{x:Static res:Strings.TaxRules_Cap}" />
+              <DataGridTemplateColumn Width="44">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <ui:Button
+                        Padding="4"
+                        Command="{Binding DataContext.RemoveExemptionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                        CommandParameter="{Binding}"
+                        Icon="{ui:SymbolIcon Delete16}"
+                        ToolTip="{x:Static res:Strings.App_Delete}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+
+          <!-- Rebate, minimum and rounding -->
+          <TextBlock Margin="0,16,0,4" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.TaxRules_Other}" />
+          <CheckBox Margin="0,0,0,8" Content="{x:Static res:Strings.TaxRules_HasRebate}" IsChecked="{Binding HasRebate}" />
+          <Grid IsEnabled="{Binding HasRebate}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.TaxRules_RebatePercent}" />
+              <ui:NumberBox MaxDecimalPlaces="2" Maximum="100" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding RebatePercent, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.TaxRules_RebateShare}" />
+              <ui:NumberBox MaxDecimalPlaces="2" Maximum="100" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding RebateMaxInvestmentPercent, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Grid.Column="4" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.TaxRules_RebateMax}" />
+              <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" PlaceholderText="{x:Static res:Strings.TaxRules_NoLimit}" SpinButtonPlacementMode="Hidden" Value="{Binding RebateMax, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+          </Grid>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="8" />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.TaxRules_MinimumTax}" />
+              <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding MinimumTax, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.TaxRules_RoundingStep}" />
+              <ui:NumberBox MaxDecimalPlaces="2" Minimum="0.01" SpinButtonPlacementMode="Hidden" Value="{Binding RoundingStep, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+          </Grid>
+          <StackPanel Style="{StaticResource Field}">
+            <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.App_Notes}" />
+            <ui:TextBox MinHeight="60" AcceptsReturn="True" Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Quick check -->
+        <ui:Card Grid.Column="2" VerticalAlignment="Top">
+          <StackPanel>
+            <TextBlock Margin="0,0,0,4" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.TaxRules_Trial}" />
+            <TextBlock Margin="0,0,0,8" Style="{StaticResource Caption}" Text="{x:Static res:Strings.TaxRules_TrialHint}" TextWrapping="Wrap" />
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.TaxRules_TrialIncome}" />
+              <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding TrialIncome, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Tax_Investment}" />
+              <ui:NumberBox MaxDecimalPlaces="0" Minimum="0" SpinButtonPlacementMode="Hidden" Value="{Binding TrialInvestment, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Style="{StaticResource Field}">
+              <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Tax_Category}" />
+              <ui:TextBox Text="{Binding TrialCategory, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <ui:Button Margin="0,0,0,12" Command="{Binding TryCommand}" Content="{x:Static res:Strings.TaxRules_Calculate}" Icon="{ui:SymbolIcon Calculator20}" />
+            <TextBlock Margin="0,0,0,8" FontWeight="SemiBold" Style="{StaticResource BodyText}" Text="{Binding TrialResult}" TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding TrialLines}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Margin="0,0,0,2" Style="{StaticResource Caption}" Text="{Binding}" TextWrapping="Wrap" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </ui:Card>
+      </Grid>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

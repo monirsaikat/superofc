@@ -1,0 +1,45 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Entry.LockView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <Grid Background="{DynamicResource ApplicationBackgroundBrush}">
+    <Border Width="380" Style="{StaticResource EntryCard}">
+      <StackPanel>
+        <ui:SymbolIcon
+            Margin="0,0,0,12"
+            HorizontalAlignment="Left"
+            FontSize="40"
+            Symbol="LockClosed24" />
+        <TextBlock Style="{StaticResource PageTitle}" Margin="0,0,0,4" Text="{x:Static res:Strings.Lock_Title}" />
+        <TextBlock Margin="0,0,0,4" Style="{StaticResource BodyText}" Text="{Binding DisplayName}" />
+        <TextBlock Margin="0,0,0,16" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Lock_Message}" />
+        <StackPanel Style="{StaticResource Field}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Login_Password}" />
+          <ui:PasswordBox x:Name="PasswordInput" Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <ui:PasswordBox.InputBindings>
+              <KeyBinding Key="Enter" Command="{Binding UnlockCommand}" />
+            </ui:PasswordBox.InputBindings>
+          </ui:PasswordBox>
+        </StackPanel>
+        <TextBlock
+            Margin="0,0,0,12"
+            Style="{StaticResource ErrorText}"
+            Text="{Binding ErrorMessage}"
+            Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+        <ui:Button
+            HorizontalAlignment="Stretch"
+            Appearance="Primary"
+            Command="{Binding UnlockCommand}"
+            Content="{x:Static res:Strings.Lock_Unlock}" />
+        <ui:Button
+            Margin="0,8,0,0"
+            HorizontalAlignment="Stretch"
+            Appearance="Transparent"
+            Command="{Binding SignOutCommand}"
+            Content="{x:Static res:Strings.Lock_SignOutInstead}" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

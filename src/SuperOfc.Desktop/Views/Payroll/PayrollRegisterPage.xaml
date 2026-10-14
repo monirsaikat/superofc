@@ -1,0 +1,41 @@
+<UserControl
+    x:Class="SuperOfc.Desktop.Views.Payroll.PayrollRegisterPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:res="clr-namespace:SuperOfc.Desktop.Resources">
+  <DockPanel Margin="{StaticResource PagePadding}">
+    <Grid Margin="0,0,0,12" DockPanel.Dock="Top">
+      <TextBlock Style="{StaticResource PageTitle}" Text="{Binding Title}" />
+      <ui:Button
+          HorizontalAlignment="Right"
+          VerticalAlignment="Center"
+          Appearance="Primary"
+          Command="{Binding ExportCommand}"
+          Content="{x:Static res:Strings.App_ExportExcel}"
+          Icon="{ui:SymbolIcon ArrowDownload20}" />
+    </Grid>
+    <TextBlock
+        Margin="0,0,0,12"
+        DockPanel.Dock="Top"
+        Style="{StaticResource ErrorText}"
+        Text="{Binding ErrorMessage}"
+        Visibility="{Binding ErrorMessage, Converter={StaticResource HasValueToVisibility}}" />
+    <!-- Columns are added in code-behind: one per payslip line in the register. Bottom grid: department totals and the grand total. -->
+    <DataGrid
+        x:Name="Totals"
+        MaxHeight="220"
+        Margin="0,12,0,0"
+        AutoGenerateColumns="False"
+        DockPanel.Dock="Bottom"
+        FontWeight="SemiBold"
+        ItemsSource="{Binding TotalRows}"
+        Style="{StaticResource ListGrid}" />
+    <DataGrid
+        x:Name="Grid"
+        AutoGenerateColumns="False"
+        FrozenColumnCount="2"
+        ItemsSource="{Binding Rows}"
+        Style="{StaticResource ListGrid}" />
+  </DockPanel>
+</UserControl>

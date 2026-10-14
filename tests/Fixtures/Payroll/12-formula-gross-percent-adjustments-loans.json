@@ -1,0 +1,130 @@
+{
+  "period": "2026-03",
+  "employment": {
+    "from": "2025-01-01",
+    "to": null
+  },
+  "overtimeEligible": true,
+  "weeklyOffs": [
+    "Friday",
+    "Saturday"
+  ],
+  "components": [
+    {
+      "code": "BASIC",
+      "name": "Basic salary",
+      "kind": "Earning",
+      "calc": "Fixed",
+      "isBasic": true,
+      "order": 1
+    },
+    {
+      "code": "HRA",
+      "name": "House rent",
+      "kind": "Earning",
+      "calc": "PercentOfBasic",
+      "order": 2
+    },
+    {
+      "code": "SPECIAL",
+      "name": "Special allowance",
+      "kind": "Earning",
+      "calc": "Formula",
+      "formula": "(BASIC + HRA) * 0.1",
+      "order": 3
+    },
+    {
+      "code": "BONUSG",
+      "name": "Gross bonus",
+      "kind": "Earning",
+      "calc": "PercentOfGross",
+      "order": 4
+    },
+    {
+      "code": "WELFARE",
+      "name": "Welfare fund",
+      "kind": "Deduction",
+      "calc": "PercentOfGross",
+      "order": 10
+    },
+    {
+      "code": "EPF",
+      "name": "Employer PF",
+      "kind": "EmployerContribution",
+      "calc": "PercentOfBasic",
+      "order": 20
+    }
+  ],
+  "segments": [
+    {
+      "from": "2025-01-01",
+      "to": null,
+      "lines": {
+        "BASIC": 20000,
+        "HRA": {
+          "rate": 50
+        },
+        "SPECIAL": 0,
+        "BONUSG": {
+          "rate": 10
+        },
+        "WELFARE": {
+          "rate": 1
+        },
+        "EPF": {
+          "rate": 10
+        }
+      }
+    }
+  ],
+  "note": "SPECIAL = (BASIC + HRA) x 0.1; BONUSG = 10 % of earnings before it; WELFARE = 1 % of full gross; EPF employer contribution 10 % of basic. Loan L1 (31,000) would take net below the 10,000 minimum and is skipped.",
+  "policy": {
+    "minimumNetPay": 10000
+  },
+  "adjustments": [
+    {
+      "name": "Festival bonus",
+      "kind": "Earning",
+      "amount": 5000,
+      "taxable": true
+    },
+    {
+      "name": "Canteen",
+      "kind": "Deduction",
+      "amount": 700
+    }
+  ],
+  "loans": [
+    {
+      "code": "LOAN",
+      "name": "Loan L1",
+      "amount": 31000
+    },
+    {
+      "code": "LOAN",
+      "name": "Loan L2",
+      "amount": 2000
+    }
+  ],
+  "expected": {
+    "payableDays": 31,
+    "gross": 41300,
+    "deductions": 3063,
+    "net": 38237,
+    "employerContributions": 2000,
+    "loan": 2000,
+    "skipped": 1,
+    "lines": {
+      "BASIC": 20000,
+      "HRA": 10000,
+      "SPECIAL": 3000,
+      "BONUSG": 3300,
+      "Festival bonus": 5000,
+      "WELFARE": 363,
+      "Canteen": 700,
+      "Loan L2": 2000,
+      "EPF": 2000
+    }
+  },
+  "name": "12-formula-gross-percent-adjustments-loans"
+}
