@@ -20,6 +20,9 @@ namespace SuperOfc.Desktop.ViewModels.Letters;
 public static class LetterKinds
 {
     public static IReadOnlyList<Choice<LetterKind>> All { get; } = [.. Enum.GetValues<LetterKind>().Select(k => new Choice<LetterKind>(k, Strings.Get("LetterKind_" + k)))];
+
+    /// <summary>Preview text without the ** bold markers, which only the PDF renders.</summary>
+    public static string? Plain(string? text) => text?.Replace("**", string.Empty, StringComparison.Ordinal);
 }
 
 /// <summary>Settings › Letter templates: write letters once with fields; the preview fills them for a sample employee.</summary>
@@ -241,8 +244,8 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
     {
         if (SampleEmployeeId == Guid.Empty || !CanManage)
         {
-            PreviewSubject = Subject;
-            PreviewBody = Body;
+            PreviewSubject = LetterKinds.Plain(Subject);
+            PreviewBody = LetterKinds.Plain(Body);
             PreviewMissing = null;
             return;
         }
@@ -253,8 +256,8 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
             return;
         }
 
-        PreviewSubject = result.Value.Subject;
-        PreviewBody = result.Value.Body;
+        PreviewSubject = LetterKinds.Plain(result.Value.Subject);
+        PreviewBody = LetterKinds.Plain(result.Value.Body);
         var missing = result.Value.Missing.Where(m => !m.StartsWith(LetterText.InputGroup + ".", StringComparison.OrdinalIgnoreCase)).ToList();
         PreviewMissing = missing.Count == 0 ? null : string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_Missing, string.Join(", ", missing.Select(m => "{" + m + "}")));
     }
@@ -338,7 +341,7 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
     public partial LetterTemplateDto? Template { get; set; }
 
     [ObservableProperty]
-    public partial Guid? DepartmentId { get; set; }
+    public partial Guid? DepartmentId { get; set; } = Guid.Empty;
 
     [ObservableProperty]
     public partial string? Search { get; set; }
@@ -470,8 +473,8 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
         var first = _people.FirstOrDefault(p => p.IsSelected);
         if (Template is null || first is null || !CanIssue || Date is not { } date)
         {
-            PreviewSubject = Template?.Subject;
-            PreviewBody = Template?.Body;
+            PreviewSubject = LetterKinds.Plain(Template?.Subject);
+            PreviewBody = LetterKinds.Plain(Template?.Body);
             return;
         }
 
@@ -479,8 +482,8 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
             .ConfigureAwait(true);
         if (result.IsSuccess)
         {
-            PreviewSubject = result.Value.Subject;
-            PreviewBody = result.Value.Body;
+            PreviewSubject = LetterKinds.Plain(result.Value.Subject);
+            PreviewBody = LetterKinds.Plain(result.Value.Body);
         }
     }
 

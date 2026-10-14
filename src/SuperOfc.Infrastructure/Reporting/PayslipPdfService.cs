@@ -20,7 +20,7 @@ public sealed class PayslipPdfService : IPayslipPdfService
     static PayslipPdfService()
     {
         // Community licence: free below the revenue threshold (ADR-07; re-check before commercial sale, doc 10).
-        QuestPDF.Settings.License = LicenseType.Community;
+        PdfStyles.EnsureLicense();
     }
 
     public void Write(PayslipCompany company, IReadOnlyList<PayslipDocument> payslips, string path)
@@ -64,7 +64,7 @@ public sealed class PayslipPdfService : IPayslipPdfService
         var month = new DateTime(p.Year, p.Month, 1).ToString("MMMM yyyy", CultureInfo.InvariantCulture);
         page.Size(PageSizes.A4);
         page.Margin(32);
-        page.DefaultTextStyle(t => t.FontSize(9.5f).FontColor(Colors.Black));
+        page.DefaultTextStyle(t => t.FontFamily(PdfStyles.Fonts).FontSize(9.5f).FontColor(Colors.Black));
 
         page.Header().Column(col =>
         {

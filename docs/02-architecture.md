@@ -260,6 +260,18 @@ Install: %LocalAppData%\SuperOfc\  (Velopack default)
 - The dashboard asks for its module figures with one query (`GetDashboardQuery`) whose sections are
   null when the role may not see them.
 
+### ADR-23 — Letters are templates with a field catalog; issued letters are snapshots (implemented after Phase 8)
+
+- Templates are plain text with `{Group.Field}` placeholders, not Word files. The text engine
+  (`LetterText` in Domain) only fills, escapes and splits paragraphs; the values come from one Application
+  service (`LetterData`) that reads employee, salary and company data for many employees in a few queries.
+- The field catalog (`LetterFields`) is code, so every field is tested and documented, and unknown fields
+  are caught when the template is saved rather than when a letter is printed.
+- Issued letters keep the rendered text. A letter is a legal record: a reprint must match the signed copy,
+  so it never re-renders from the current data.
+- One PDF renderer (`ILetterPdfService`) draws the letterhead from company settings, the reference number
+  and date, the subject and paragraphs. Word output, signatures and letter approval are open (Q51–Q54).
+
 ## Seams for the future (build the interface now, the implementation later)
 
 | Future need | Seam in v1 |

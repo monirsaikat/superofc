@@ -13,5 +13,6 @@ Read these in order the first time:
 7. [Income tax](07-tax.md): tax rules, employee declarations and statements.
 8. [Reports and dashboard](08-reports.md): every report and what the dashboard tiles mean.
 9. [Settings, backups and help](09-settings-and-backup.md): policies, backups, restore, updates, diagnostics.
+10. [HR letters](10-letters.md): letter templates, issuing letters to one person or many, reprints.
 
 Keyboard: Ctrl+N creates a new item on list pages, F5 refreshes, Ctrl+L locks the screen.

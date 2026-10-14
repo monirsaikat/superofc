@@ -20,12 +20,13 @@ public sealed record UpdateSettings
 {
     public const string Key = "Updates";
 
-    /// <summary>Placeholder feed until the hosting decision is made (docs/10, Q20).</summary>
-    public const string DefaultFeedUrl = "https://updates.superofc.invalid/superofc";
+    /// <summary>Public releases repository; the source code repository stays private (docs/10, Q20).</summary>
+    public const string DefaultFeedUrl = "https://github.com/monirsaikat/superofc-releases";
 
     public UpdateMode Mode { get; init; } = UpdateMode.Automatic;
 
-    public string Channel { get; init; } = "stable";
+    /// <summary>"stable" or "beta"; null follows the channel this copy was installed from.</summary>
+    public string? Channel { get; init; }
 
     public string FeedUrl { get; init; } = DefaultFeedUrl;
 
@@ -60,6 +61,9 @@ public interface IUpdateService
     UpdateStatus Status { get; }
 
     bool IsInstalled { get; }
+
+    /// <summary>The channel of the installed package ("stable" when not installed).</summary>
+    string InstalledChannel { get; }
 
     Task<UpdateStatus> CheckAsync(bool downloadIfAvailable, CancellationToken cancellationToken = default);
 

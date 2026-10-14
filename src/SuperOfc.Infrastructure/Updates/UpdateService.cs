@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SuperOfc.Application.Abstractions;
 using Velopack;
+using Velopack.Locators;
+using Velopack.Sources;
 
 namespace SuperOfc.Infrastructure.Updates;
 
@@ -27,6 +29,7 @@ public sealed class UpdateService : IUpdateService
         try
         {
             _isInstalled = new UpdateManager(UpdateSettings.DefaultFeedUrl).IsInstalled;
+            InstalledChannel = _isInstalled ? VelopackLocator.Current?.Channel ?? "stable" : "stable";
         }
         catch (Exception ex) when (ex is InvalidOperationException or NotSupportedException or IOException)
         {
@@ -42,6 +45,8 @@ public sealed class UpdateService : IUpdateService
     public UpdateStatus Status { get; private set; }
 
     public bool IsInstalled => _isInstalled;
+
+    public string InstalledChannel { get; } = "stable";
 
     public async Task<UpdateStatus> CheckAsync(bool downloadIfAvailable, CancellationToken cancellationToken = default)
     {
@@ -59,7 +64,10 @@ public sealed class UpdateService : IUpdateService
         Publish(new UpdateStatus(UpdateState.Checking, _currentVersion));
         try
         {
-            _manager = new UpdateManager(settings.FeedUrl, new UpdateOptions { ExplicitChannel = settings.Channel });
+            var channel = settings.Channel ?? InstalledChannel;
+            // Copies set up before the feed existed saved the old placeholder address.
+            var feed = settings.FeedUrl.Contains(".invalid", StringComparison.OrdinalIgnoreCase) ? UpdateSettings.DefaultFeedUrl : settings.FeedUrl;
+            _manager = new UpdateManager(CreateSource(feed, channel), new UpdateOptions { ExplicitChannel = channel });
             var info = await _manager.CheckForUpdatesAsync().ConfigureAwait(false);
             await _settings.SetAsync(UpdateSettings.Key, settings with { LastCheckUtc = _clock.UtcNow }, cancellationToken).ConfigureAwait(false);
             if (info is null)
@@ -107,6 +115,12 @@ public sealed class UpdateService : IUpdateService
         _manager.ApplyUpdatesAndRestart(_pending.TargetFullRelease);
         return null;
     }
+
+    /// <summary>GitHub release pages for a github.com repository URL; any other URL is a plain web folder with the feed files.</summary>
+    private static IUpdateSource CreateSource(string url, string channel)
+        => Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase)
+            ? new GithubSource(url, accessToken: null, prerelease: channel != "stable")
+            : new SimpleWebSource(url);
 
     private UpdateStatus Publish(UpdateStatus status)
     {

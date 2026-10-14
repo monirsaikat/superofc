@@ -12,6 +12,8 @@
     <AssemblyName>SuperOfc.DeviceBridge</AssemblyName>
     <ImplicitUsings>disable</ImplicitUsings>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <!-- Restore both: publishing the desktop app with -r win-x64 restores this project under that RID too. -->
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\SuperOfc.DeviceBridge.Contracts\SuperOfc.DeviceBridge.Contracts.csproj" />

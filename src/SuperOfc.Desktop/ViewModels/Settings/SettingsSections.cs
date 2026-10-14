@@ -543,7 +543,7 @@ public sealed partial class UpdatesSettingsViewModel : PageViewModel
         _loading = true;
         var config = await _settings.GetAsync<UpdateSettings>(UpdateSettings.Key).ConfigureAwait(true);
         Mode = config.Mode;
-        Channel = config.Channel;
+        Channel = config.Channel ?? _updates.InstalledChannel;
         FeedUrl = config.FeedUrl;
         _loading = false;
         if (config.LastCheckUtc is { } last && _updates.Status.State is UpdateState.Idle)

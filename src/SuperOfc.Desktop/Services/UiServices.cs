@@ -365,20 +365,25 @@ public sealed class AppThemeService : IAppThemeService
         }
     }
 
+    /// <summary>Brand orange from the logo; used as the accent instead of the Windows accent colour.</summary>
+    private static readonly System.Windows.Media.Color BrandAccent = System.Windows.Media.Color.FromRgb(0xF2, 0x63, 0x18);
+
     private void ApplyCore()
     {
         switch (Theme)
         {
             case AppTheme.Light:
-                ApplicationThemeManager.Apply(ApplicationTheme.Light, WindowBackdropType.Mica, true);
+                ApplicationThemeManager.Apply(ApplicationTheme.Light, WindowBackdropType.Mica, false);
                 break;
             case AppTheme.Dark:
-                ApplicationThemeManager.Apply(ApplicationTheme.Dark, WindowBackdropType.Mica, true);
+                ApplicationThemeManager.Apply(ApplicationTheme.Dark, WindowBackdropType.Mica, false);
                 break;
             default:
-                ApplicationThemeManager.ApplySystemTheme(true);
+                ApplicationThemeManager.ApplySystemTheme(false);
                 break;
         }
+
+        ApplicationAccentColorManager.Apply(BrandAccent, ApplicationThemeManager.GetAppTheme());
     }
 
     private sealed class UiPrefs

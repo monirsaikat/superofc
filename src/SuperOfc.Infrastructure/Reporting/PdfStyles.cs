@@ -14,8 +14,26 @@ internal static class PdfStyles
     public const string HeaderFill = "#EAF0F6";
     public const string TotalFill = "#F6F8FA";
 
-    /// <summary>Sets the QuestPDF licence; call before building a document.</summary>
-    public static void EnsureLicense() => QuestPDF.Settings.License = LicenseType.Community;
+    /// <summary>
+    /// Lato (QuestPDF's bundled default) for Latin text, then Noto Sans Bengali for the taka sign and Bengali names.
+    /// Every page's default text style uses this list so no PDF depends on fonts installed on the PC.
+    /// </summary>
+    public static readonly string[] Fonts = ["Lato", "Noto Sans Bengali"];
+
+    private static readonly Lazy<bool> Configured = new(() =>
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        // A character no font has prints as a blank box instead of failing the whole document.
+        QuestPDF.Settings.ThrowOnMissingTextGlyphs = false;
+        using var font = typeof(PdfStyles).Assembly.GetManifestResourceStream("Fonts.NotoSansBengali.ttf")
+            ?? throw new InvalidOperationException("Embedded font Fonts.NotoSansBengali.ttf is missing.");
+        QuestPDF.Drawing.FontManager.RegisterFontFromStream(font);
+        return true;
+    });
+
+    /// <summary>Sets the QuestPDF licence and registers the bundled fonts; call before building a document.</summary>
+    public static void EnsureLicense() => _ = Configured.Value;
 
     /// <summary>Company name and address on the left, the document title and subtitle on the right, then a rule.</summary>
     public static void Header(IContainer container, PayslipCompany company, string title, string subtitle)

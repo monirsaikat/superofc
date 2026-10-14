@@ -27,7 +27,7 @@ public sealed class ReportPdfService : IReportPdfService
         {
             page.Size(landscape ? PageSizes.A4.Landscape() : PageSizes.A4);
             page.Margin(28);
-            page.DefaultTextStyle(t => t.FontSize(8.5f));
+            page.DefaultTextStyle(t => t.FontFamily(PdfStyles.Fonts).FontSize(8.5f));
             page.Header().Element(c => PdfStyles.Header(c, company, table.Title, table.Subtitle));
             page.Footer().Element(c => PdfStyles.Footer(c, company));
             page.Content().PaddingTop(10).Column(col =>

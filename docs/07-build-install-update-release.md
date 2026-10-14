@@ -94,31 +94,42 @@ Windows account on the PC can use the same data. Data path can be moved from Set
 - Restore: pick a file, verify, backup the current DB first, replace, restart.
 
 ## Continuous integration (GitHub Actions, `windows-latest`)
-```yaml
-name: build
-on: { push: { branches: [main] }, pull_request: {}, push_tags: { tags: ['v*'] } }
-jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with: { dotnet-version: '10.0.x' }
-      - run: dotnet restore
-      - run: dotnet build -c Release --no-restore -warnaserror
-      - run: dotnet test -c Release --no-build --logger trx
-      - run: dotnet publish src/SuperOfc.Desktop -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o artifacts/publish
-      - run: dotnet publish src/SuperOfc.DeviceBridge -c Release -r win-x86 --self-contained -o artifacts/publish/bridge
-      - run: dotnet tool install -g vpk
-      - run: vpk pack --packId SuperOfc --packVersion ${{ env.VERSION }} --packDir artifacts/publish --mainExe SuperOfc.Desktop.exe --channel ${{ env.CHANNEL }} --outputDir artifacts/releases
-      - uses: actions/upload-artifact@v4
-        with: { name: releases, path: artifacts/releases }
-  release:   # only on tags; signs and uploads to the update feed
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
-    ...  # download artifact, sign, vpk upload github|s3|copy to static host
+
+Two workflows in `.github/workflows/`:
+
+| Workflow | Runs on | Does |
+|----------|---------|------|
+| `ci.yml` | every push to `main`, every pull request, manual | restore, build with `-warnaserror`, run all tests, upload the test results |
+| `release.yml` | a pushed tag `v*` | build, test and package with `tools/release/publish.ps1`, then publish the installer and update feed |
+
+Release steps in `release.yml`:
+
+1. `VERSION` comes from the tag (`v1.2.3` gives `1.2.3`); `CHANNEL` is `beta` when the version has a
+   pre-release part (`-beta.1`), otherwise `stable`.
+2. `vpk download github` fetches the previous release so Velopack can build a small delta package.
+3. `publish.ps1` builds, tests, publishes the app and the device bridge, and runs `vpk pack`.
+4. `vpk upload github` publishes `Setup.exe`, the portable zip, the packages and `releases.<channel>.json`
+   to the **public releases repository** `monirsaikat/superofc-releases` (beta releases are marked
+   pre-release). The source repository stays private.
+5. The installer is also attached to a release in the source repository, with the CHANGELOG notes.
+
+The workflow needs the secret `RELEASES_TOKEN`: a fine-grained personal access token with
+"Contents: read and write" on `monirsaikat/superofc-releases` only. Signing is added with
+`-SignParams` when the certificate exists (Q49).
+
+How to release: update `CHANGELOG.md`, commit, then
+
 ```
-`VERSION` comes from the tag (`v1.2.3` -> `1.2.3`); `CHANNEL` = `beta` for `-beta` tags, else `stable`.
+git tag v1.0.0-beta.3
+git push origin v1.0.0-beta.3
+```
+
+## Where installed copies look for updates
+
+`UpdateSettings.DefaultFeedUrl` is `https://github.com/monirsaikat/superofc-releases`. For a github.com
+address the app uses Velopack's `GithubSource` (pre-releases included on the beta channel); any other
+address is read as a plain web folder holding the feed files. The channel defaults to the one the copy
+was installed from, and an administrator can change it under Settings › Updates.
 
 ## Release channels and process
 - `beta`: internal/pilot customers. Every merged feature set gets a beta tag.

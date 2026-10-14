@@ -260,6 +260,25 @@ to `Open`). Finalized payslips are immutable; corrections go through a new run.
 - **Loans and tax plug in** through `IPayrollParticipant` (ADR-18): prepare deductions and tax per
   employee before the calculator runs, then react to finalize and void.
 
+### R8 — HR letters (implemented after Phase 8)
+
+- A **letter template** has a name, a kind (appointment, confirmation, increment, promotion, transfer,
+  salary certificate, experience certificate, relieving, warning, other), a subject, a body and a number
+  prefix. Templates are soft-deleted; letters already issued from them stay.
+- Fields are written in braces: `{Employee.Name}`, `{Salary.Gross}`, `{Company.Name}`, `{Today}`. The
+  catalog (`LetterFields`) is the only list of valid fields; saving a template with an unknown field is
+  refused. `{Input.Something}` is a free text typed when the letter is issued (reason, purpose).
+- Field matching ignores case. `{{` and `}}` print literal braces. A value that starts a sentence is
+  capitalized (`{Employee.HeShe}` becomes "She"). `**text**` is bold; an empty line starts a paragraph.
+- Salary fields (`Salary.*`) and private fields (bank account, tax id) need `ViewSalaries`. A user without it
+  cannot issue or reprint a letter that uses them.
+- **No blanks:** a letter is not issued if any field would be empty for any chosen employee. The error lists
+  every employee and the missing details, so they can be filled first.
+- Issuing gives each letter a number `PREFIX/yyyy/0001`, counted per prefix and year, unique per company.
+- An **issued letter** stores the rendered subject and body (a snapshot). Reprints show exactly what was
+  signed, even after the template, salary or name changes. Issuing is audited (`Letter.Issued`).
+- Letters for many employees go into one PDF (one letter per page) or one PDF per employee.
+
 ## Invariants to test
 - No two `SalaryAssignment`s for one employee overlap in date.
 - `AttendancePunch` dedup key is unique.

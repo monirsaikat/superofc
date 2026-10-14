@@ -32,10 +32,11 @@
                 Margin="0,0,0,6"
                 DockPanel.Dock="Top"
                 Icon="{ui:SymbolIcon Search20}"
-                PlaceholderText="{x:Static res:Strings.Loans_SearchHint}"
+                PlaceholderText="{x:Static res:Strings.Employees_SearchHint}"
                 Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
+            <CheckBox Margin="0,0,0,6" Content="{x:Static res:Strings.Letters_IncludeLeft}" DockPanel.Dock="Top" IsChecked="{Binding IncludeLeft}" />
             <Grid Margin="0,0,0,6" DockPanel.Dock="Top">
-              <CheckBox Content="{x:Static res:Strings.Letters_IncludeLeft}" IsChecked="{Binding IncludeLeft}" />
+              <TextBlock VerticalAlignment="Center" Style="{StaticResource Caption}" Text="{Binding SelectionText}" />
               <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                 <ui:Button Margin="0,0,4,0" Padding="8,2" Command="{Binding SelectAllCommand}" Content="{x:Static res:Strings.App_SelectAll}">
                   <ui:Button.CommandParameter>
@@ -49,7 +50,6 @@
                 </ui:Button>
               </StackPanel>
             </Grid>
-            <TextBlock Margin="0,0,0,6" DockPanel.Dock="Top" Style="{StaticResource Caption}" Text="{Binding SelectionText}" />
             <ListBox ItemsSource="{Binding People}" VirtualizingPanel.IsVirtualizing="True">
               <ListBox.ItemTemplate>
                 <DataTemplate>

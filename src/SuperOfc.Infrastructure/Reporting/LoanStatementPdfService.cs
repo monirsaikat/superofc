@@ -39,7 +39,7 @@ public sealed class LoanStatementPdfService : ILoanStatementPdfService
         {
             page.Size(PageSizes.A4);
             page.Margin(32);
-            page.DefaultTextStyle(t => t.FontSize(9.5f));
+            page.DefaultTextStyle(t => t.FontFamily(PdfStyles.Fonts).FontSize(9.5f));
             page.Header().Column(col =>
             {
                 col.Item().Row(row =>

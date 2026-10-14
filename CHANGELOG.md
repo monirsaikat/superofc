@@ -6,6 +6,10 @@ Format follows Keep a Changelog; versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Updates come from GitHub: installed copies check the public SuperOfc releases page, and a beta copy follows beta releases by default.
+- PDFs carry their own fonts, so the taka sign (৳) and Bengali names print on any PC.
+- New logo for the app window, taskbar, installer and sign-in screen, and an orange accent colour to match.
+- HR letters: write a letter once with fields such as {Employee.Name} or {Salary.Gross}, and the app fills them for each person. Seven standard letters (appointment, confirmation, increment, salary and experience certificates, relieving, warning) are included. Issue to one person or a whole department in one PDF or one file each, with letter numbers, a register and reprint. Letters are never printed with empty details.
 - First-run setup wizard: company name, currency, number grouping, time zone, fiscal year, date format, working week and the administrator account.
 - Sign-in with lockout after repeated failed attempts, lock screen (Ctrl+L and after idle time), sign-out.
 - Users and roles (Admin, HR, Accounts, Viewer) with password reset; every change is recorded in the audit log.

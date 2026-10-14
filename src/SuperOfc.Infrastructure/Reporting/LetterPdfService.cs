@@ -31,7 +31,7 @@ public sealed class LetterPdfService : ILetterPdfService
                     page.Size(PageSizes.A4);
                     page.MarginHorizontal(56);
                     page.MarginVertical(40);
-                    page.DefaultTextStyle(t => t.FontSize(11).LineHeight(1.35f));
+                    page.DefaultTextStyle(t => t.FontFamily(PdfStyles.Fonts).FontSize(11).LineHeight(1.35f));
                     page.Header().Column(col =>
                     {
                         col.Item().Row(row =>

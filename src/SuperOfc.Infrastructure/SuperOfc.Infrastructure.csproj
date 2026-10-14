@@ -23,5 +23,7 @@
   <ItemGroup>
     <!-- Tax country packs (doc 03 R5): embedded so they ship inside the assembly. -->
     <EmbeddedResource Include="Seed\Tax\*.json" LogicalName="TaxPack.%(Filename).json" />
+    <!-- PDF fallback font for the taka sign and Bengali text (SIL Open Font License, see Reporting\Fonts). -->
+    <EmbeddedResource Include="Reporting\Fonts\NotoSansBengali.ttf" LogicalName="Fonts.NotoSansBengali.ttf" />
   </ItemGroup>
 </Project>

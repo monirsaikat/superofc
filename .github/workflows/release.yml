@@ -1,0 +1,83 @@
+# Builds, tests and packages SuperOfc, then publishes the installer and update feed to the public
+# releases repository (docs/07, docs/10 Q20). The source repository stays private.
+#
+# Release: push a tag such as v1.0.0-beta.3 (beta channel, pre-release) or v1.0.0 (stable channel).
+# Needs the secret RELEASES_TOKEN: a fine-grained token with "Contents: read and write" on
+# monirsaikat/superofc-releases only.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  RELEASES_REPO: https://github.com/monirsaikat/superofc-releases
+  VPK_VERSION: 1.2.161
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check the releases token
+        shell: pwsh
+        env:
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          if (-not $env:RELEASES_TOKEN) {
+            Write-Error 'Add the RELEASES_TOKEN secret (Settings > Secrets and variables > Actions); see the top of this file.'
+            exit 1
+          }
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Version and channel from the tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          $channel = if ($version.Contains('-')) { 'beta' } else { 'stable' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "channel=$channel" >> $env:GITHUB_OUTPUT
+          Write-Host "Releasing $version on $channel"
+
+      - name: Install vpk
+        run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
+
+      - name: Download previous release (for delta updates)
+        shell: pwsh
+        run: |
+          $pre = if ('${{ steps.version.outputs.channel }}' -eq 'beta') { '--pre' } else { '' }
+          vpk download github --repoUrl $env:RELEASES_REPO --channel ${{ steps.version.outputs.channel }} `
+            --outputDir artifacts/releases/${{ steps.version.outputs.channel }} --token ${{ secrets.RELEASES_TOKEN }} $pre
+          if ($LASTEXITCODE -ne 0) { Write-Warning 'No previous release found; publishing a full package only.' }
+          exit 0
+
+      - name: Build, test and package
+        shell: pwsh
+        # Add -SignParams once the code-signing certificate is available (docs/10 Q49).
+        run: ./tools/release/publish.ps1 -Version ${{ steps.version.outputs.version }} -Channel ${{ steps.version.outputs.channel }}
+
+      - name: Publish to the releases repository
+        shell: pwsh
+        run: |
+          $pre = if ('${{ steps.version.outputs.channel }}' -eq 'beta') { '--pre' } else { '' }
+          vpk upload github --repoUrl $env:RELEASES_REPO --channel ${{ steps.version.outputs.channel }} `
+            --outputDir artifacts/releases/${{ steps.version.outputs.channel }} --token ${{ secrets.RELEASES_TOKEN }} `
+            --publish $pre --releaseName "SuperOfc ${{ steps.version.outputs.version }}" --tag ${{ github.ref_name }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Record the release in this repository
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SuperOfc ${{ steps.version.outputs.version }}
+          body_path: artifacts/RELEASE-NOTES.md
+          prerelease: ${{ steps.version.outputs.channel == 'beta' }}
+          files: artifacts/releases/${{ steps.version.outputs.channel }}/*Setup.exe
