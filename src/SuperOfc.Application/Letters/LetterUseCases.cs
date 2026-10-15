@@ -12,7 +12,8 @@ namespace SuperOfc.Application.Letters;
 
 // ---------- Templates ----------
 
-public sealed record LetterTemplateDto(Guid Id, string Name, LetterKind Kind, string Subject, string Body, string NumberPrefix, bool IsActive, int SortOrder)
+public sealed record LetterTemplateDto(Guid Id, string Name, LetterKind Kind, string Subject, string Body, string NumberPrefix, bool IsActive, int SortOrder,
+    bool IsWord, string? DocumentFileName)
 {
     /// <summary>Fields typed when issuing, from <c>{Input.X}</c>.</summary>
     public IReadOnlyList<string> Inputs => LetterText.Inputs(Subject, Body);
@@ -34,7 +35,7 @@ public sealed class GetLetterTemplatesHandler(IAppDbContext db, ICurrentUser use
         }
 
         return await query.OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
-            .Select(t => new LetterTemplateDto(t.Id, t.Name, t.Kind, t.Subject, t.Body, t.NumberPrefix, t.IsActive, t.SortOrder))
+            .Select(t => new LetterTemplateDto(t.Id, t.Name, t.Kind, t.Subject, t.Body, t.NumberPrefix, t.IsActive, t.SortOrder, t.Document != null, t.DocumentFileName))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 }
@@ -79,14 +80,27 @@ public sealed class SaveLetterTemplateHandler(IAppDbContext db, ICurrentUser use
 {
     public async Task<Result<Guid>> HandleAsync(SaveLetterTemplateCommand request, CancellationToken cancellationToken)
     {
+        LetterTemplate? found = null;
+        if (request.Id is { } id)
+        {
+            found = await db.LetterTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == user.CompanyId && t.DeletedAtUtc == null, cancellationToken)
+                .ConfigureAwait(false);
+            if (found is null)
+            {
+                return Error.NotFound("LetterTemplate");
+            }
+        }
+
+        // A Word template's body is the document text; it changes only when a new file is uploaded.
+        var body = found is { IsWord: true } ? found.Body : request.Body.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
         var codes = await data.ComponentCodesAsync(cancellationToken).ConfigureAwait(false);
-        var unknown = LetterText.Fields(request.Subject).Concat(LetterText.Fields(request.Body)).Where(f => !LetterFields.IsKnown(f, codes)).Distinct().ToList();
+        var unknown = LetterText.Fields(request.Subject).Concat(LetterText.Fields(body)).Where(f => !LetterFields.IsKnown(f, codes)).Distinct().ToList();
         if (unknown.Count > 0)
         {
             return Error.Validation("Body", $"Unknown field: {string.Join(", ", unknown.Select(f => "{" + f + "}"))}. Pick fields from the list.");
         }
 
-        var badFormats = LetterFields.FormatErrors(codes, request.Subject, request.Body);
+        var badFormats = LetterFields.FormatErrors(codes, request.Subject, body);
         if (badFormats.Count > 0)
         {
             return Error.Validation("Body", string.Join(" ", badFormats));
@@ -100,15 +114,8 @@ public sealed class SaveLetterTemplateHandler(IAppDbContext db, ICurrentUser use
         }
 
         LetterTemplate template;
-        if (request.Id is { } id)
+        if (found is not null)
         {
-            var found = await db.LetterTemplates.FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == user.CompanyId && t.DeletedAtUtc == null, cancellationToken)
-                .ConfigureAwait(false);
-            if (found is null)
-            {
-                return Error.NotFound("LetterTemplate");
-            }
-
             template = found;
         }
         else
@@ -121,7 +128,7 @@ public sealed class SaveLetterTemplateHandler(IAppDbContext db, ICurrentUser use
         template.Name = name;
         template.Kind = request.Kind;
         template.Subject = request.Subject.Trim();
-        template.Body = request.Body.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
+        template.Body = body;
         template.NumberPrefix = request.NumberPrefix.Trim().ToUpperInvariant();
         template.IsActive = request.IsActive;
         audit.Record(request.Id is null ? "Letter.TemplateAdded" : "Letter.TemplateEdited", $"Letter template {template.Name}", nameof(LetterTemplate), template.Id);
@@ -239,15 +246,16 @@ public interface ILetterPdfService
 public sealed record IssueLettersResult(int Count, IReadOnlyList<string> Numbers, IReadOnlyList<string> Files);
 
 /// <summary>
-/// Issues a letter to each employee: fills the fields, gives each a reference number, keeps the text and saves PDF.
-/// <see cref="Path"/> is a file for one PDF, or a folder when <see cref="OneFilePerEmployee"/> is set.
+/// Issues a letter to each employee: fills the fields, gives each a reference number, keeps the text and saves the files.
+/// <see cref="Path"/> is a file for one letter, or a folder when <see cref="OneFilePerEmployee"/> is set. A Word template makes
+/// one file per employee whenever there are several (Word files are never merged), as .docx or as PDF made by Word.
 /// </summary>
 [RequiresPermission(Permission.ManageEmployees)]
 public sealed record IssueLettersCommand(Guid TemplateId, IReadOnlyList<Guid> EmployeeIds, DateOnly Date, IReadOnlyDictionary<string, string?>? Inputs, string Path,
-    bool OneFilePerEmployee = false) : ICommand<IssueLettersResult>;
+    bool OneFilePerEmployee = false, LetterOutput Output = LetterOutput.Pdf) : ICommand<IssueLettersResult>;
 
 public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICompanyContext company, IIdGenerator ids, IFileStorage files, IAuditWriter audit,
-    LetterData data, ILetterPdfService pdf) : IRequestHandler<IssueLettersCommand, IssueLettersResult>
+    LetterData data, ILetterPdfService pdf, IWordLetterService word, IWordPdfConverter converter) : IRequestHandler<IssueLettersCommand, IssueLettersResult>
 {
     public async Task<Result<IssueLettersResult>> HandleAsync(IssueLettersCommand request, CancellationToken cancellationToken)
     {
@@ -261,6 +269,17 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
         if (template is null)
         {
             return Error.NotFound("LetterTemplate");
+        }
+
+        var document = template.Document;
+        if (document is null && request.Output == LetterOutput.Word)
+        {
+            return Error.Validation("Output", "Text templates are saved as PDF.");
+        }
+
+        if (document is not null && request.Output == LetterOutput.Pdf && !converter.IsAvailable)
+        {
+            return Error.Validation("Output", WordLetterFiles.WordMissing);
         }
 
         var usesSalary = LetterFields.UsesPrivate(template.Subject, template.Body);
@@ -283,10 +302,18 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
             v["Letter.Number"] = "#";
             var missing = new List<string>();
             LetterText.Fill(template.Subject, v.Resolve, missing);
-            LetterText.Fill(template.Body, v.Resolve, missing);
+            if (document is not null)
+            {
+                word.Fill(document, v.Resolve, missing);
+            }
+            else
+            {
+                LetterText.Fill(template.Body, v.Resolve, missing);
+            }
+
             if (missing.Count > 0)
             {
-                problems.Add($"{v["Employee.Code"]} {v["Employee.Name"]}: no {string.Join(", ", missing.Select(LetterIssue.Describe))}");
+                problems.Add($"{v["Employee.Code"]} {v["Employee.Name"]}: no {string.Join(", ", missing.Distinct(StringComparer.OrdinalIgnoreCase).Select(LetterIssue.Describe))}");
             }
 
             letters.Add((new IssuedLetter { Id = ids.NewId(), CompanyId = user.CompanyId, EmployeeId = id }, v));
@@ -304,6 +331,7 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
         var next = used.Select(n => int.TryParse(n[prefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var x) ? x : 0).DefaultIfEmpty(0).Max() + 1;
 
         var documents = new List<LetterDocument>();
+        var filled = new List<byte[]>();
         foreach (var (letter, v) in letters)
         {
             letter.Number = prefix + next++.ToString("0000", CultureInfo.InvariantCulture);
@@ -314,28 +342,92 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
             letter.Kind = template.Kind;
             letter.IssuedOn = request.Date;
             letter.Subject = LetterText.Fill(template.Subject, v.Resolve, ignored);
-            letter.Body = LetterText.Fill(template.Body, v.Resolve, ignored);
+            if (document is not null)
+            {
+                var file = word.Fill(document, v.Resolve, ignored);
+                filled.Add(file);
+                letter.Body = WordLetterFiles.Truncate(word.Text(file), WordLetterFiles.MaxBodyLength);
+                letter.HasDocument = true;
+                db.IssuedLetterDocuments.Add(new IssuedLetterDocument { Id = ids.NewId(), IssuedLetterId = letter.Id, Content = file });
+            }
+            else
+            {
+                letter.Body = LetterText.Fill(template.Body, v.Resolve, ignored);
+            }
+
             letter.IncludesSalary = usesSalary;
             letter.IssuedBy = user.DisplayName;
             db.IssuedLetters.Add(letter);
             documents.Add(new LetterDocument(letter.Number, letter.IssuedOn, letter.Subject, letter.Body, v["Employee.Code"]!, v["Employee.Name"]!));
         }
 
-        var info = company.Company ?? throw new InvalidOperationException("Company is not loaded.");
-        List<string> written;
+        var written = new List<string>();
         try
         {
-            written = LetterIssue.Write(pdf, PayrollExportData.Header(info, files), documents, request.Path, request.OneFilePerEmployee, template.Name);
+            if (document is not null)
+            {
+                await WriteWordAsync(request, template.Name, documents, filled, written, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var info = company.Company ?? throw new InvalidOperationException("Company is not loaded.");
+                written.AddRange(LetterIssue.Write(pdf, PayrollExportData.Header(info, files), documents, request.Path, request.OneFilePerEmployee, template.Name));
+            }
+        }
+        catch (WordConversionException ex)
+        {
+            WordLetterFiles.DeleteQuietly(written);
+            return Error.Validation("Output", ex.Message);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            WordLetterFiles.DeleteQuietly(written);
             return Error.Validation("Path", "The file could not be written: " + ex.Message);
         }
 
         audit.Record("Letter.Issued", $"{template.Name}: {documents.Count} letters ({documents[0].Number}{(documents.Count > 1 ? " to " + documents[^1].Number : string.Empty)})",
             nameof(LetterTemplate), template.Id);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            // Usually the same reference number taken by another PC between numbering and saving.
+            WordLetterFiles.DeleteQuietly(written);
+            return Error.Conflict("Another letter was issued at the same moment. Issue again.");
+        }
+
         return new IssueLettersResult(documents.Count, [.. documents.Select(d => d.Number)], written);
+    }
+
+    private async Task WriteWordAsync(IssueLettersCommand request, string name, List<LetterDocument> documents, List<byte[]> filled, List<string> written,
+        CancellationToken cancellationToken)
+    {
+        var asPdf = request.Output == LetterOutput.Pdf;
+        var targets = new List<string>();
+        if (documents.Count == 1 && !request.OneFilePerEmployee)
+        {
+            targets.Add(request.Path);
+        }
+        else
+        {
+            Directory.CreateDirectory(request.Path);
+            targets.AddRange(documents.Select(d => System.IO.Path.Combine(request.Path, LetterIssue.Safe($"{name} {d.EmployeeCode} {d.EmployeeName}{(asPdf ? ".pdf" : ".docx")}"))));
+        }
+
+        if (asPdf)
+        {
+            // Targets are written only after Word has converted the whole batch.
+            await WordLetterFiles.ConvertAsync(converter, [.. filled.Zip(targets)], written, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        for (var i = 0; i < targets.Count; i++)
+        {
+            await File.WriteAllBytesAsync(targets[i], filled[i], cancellationToken).ConfigureAwait(false);
+            written.Add(targets[i]);
+        }
     }
 }
 
@@ -375,13 +467,13 @@ public static class LetterIssue
         return written;
     }
 
-    private static string Safe(string name) => new([.. name.Select(c => System.IO.Path.GetInvalidFileNameChars().Contains(c) ? '-' : c)]);
+    public static string Safe(string name) => new([.. name.Select(c => System.IO.Path.GetInvalidFileNameChars().Contains(c) ? '-' : c)]);
 }
 
 // ---------- Register and reprint ----------
 
 public sealed record IssuedLetterItem(Guid Id, string Number, DateOnly IssuedOn, Guid EmployeeId, string EmployeeCode, string EmployeeName, string TemplateName, LetterKind Kind,
-    string Subject, string IssuedBy, bool IncludesSalary);
+    string Subject, string IssuedBy, bool IncludesSalary, bool HasDocument);
 
 [RequiresPermission(Permission.ViewData)]
 public sealed record GetIssuedLettersQuery(Guid? EmployeeId = null, string? Search = null, int Take = 500) : IQuery<IReadOnlyList<IssuedLetterItem>>;
@@ -408,16 +500,19 @@ public sealed class GetIssuedLettersHandler(IAppDbContext db, ICurrentUser user)
         var rows = await query.OrderByDescending(x => x.l.IssuedOn).ThenByDescending(x => x.l.Number).Take(Math.Clamp(request.Take, 1, 5000))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return rows.Select(x => new IssuedLetterItem(x.l.Id, x.l.Number, x.l.IssuedOn, x.l.EmployeeId, x.Code, x.FullName, x.l.TemplateName, x.l.Kind, x.l.Subject,
-            x.l.IssuedBy, x.l.IncludesSalary)).ToList();
+            x.l.IssuedBy, x.l.IncludesSalary, x.l.HasDocument)).ToList();
     }
 }
 
-/// <summary>Prints issued letters again exactly as issued (same number and text).</summary>
+/// <summary>
+/// Prints issued letters again exactly as issued (same number and text). A Word letter is its kept file, saved as .docx or
+/// converted to PDF by Word when <see cref="Path"/> ends with .pdf; Word letters are reprinted one at a time.
+/// </summary>
 [RequiresPermission(Permission.ManageEmployees)]
 public sealed record ReprintLettersCommand(IReadOnlyList<Guid> LetterIds, string Path) : ICommand<string>;
 
-public sealed class ReprintLettersHandler(IAppDbContext db, ICurrentUser user, ICompanyContext company, IFileStorage files, ILetterPdfService pdf, IAuditWriter audit)
-    : IRequestHandler<ReprintLettersCommand, string>
+public sealed class ReprintLettersHandler(IAppDbContext db, ICurrentUser user, ICompanyContext company, IFileStorage files, ILetterPdfService pdf, IAuditWriter audit,
+    IWordPdfConverter converter) : IRequestHandler<ReprintLettersCommand, string>
 {
     public async Task<Result<string>> HandleAsync(ReprintLettersCommand request, CancellationToken cancellationToken)
     {
@@ -436,6 +531,50 @@ public sealed class ReprintLettersHandler(IAppDbContext db, ICurrentUser user, I
             return Error.Forbidden;
         }
 
+        if (rows.Any(r => r.l.HasDocument))
+        {
+            if (rows.Count > 1)
+            {
+                return Error.Validation("LetterIds", "Reprint Word letters one at a time.");
+            }
+
+            var letterId = rows[0].l.Id;
+            var content = await db.IssuedLetterDocuments.AsNoTracking().Where(d => d.IssuedLetterId == letterId).Select(d => d.Content)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            if (content is null)
+            {
+                return Error.NotFound("IssuedLetterDocument");
+            }
+
+            var asPdf = WordLetterFiles.IsPdf(request.Path);
+            if (asPdf && !converter.IsAvailable)
+            {
+                return Error.Validation("Output", WordLetterFiles.WordMissing);
+            }
+
+            try
+            {
+                if (asPdf)
+                {
+                    await WordLetterFiles.ConvertAsync(converter, [(content, request.Path)], null, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await File.WriteAllBytesAsync(request.Path, content, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (WordConversionException ex)
+            {
+                return Error.Validation("Output", ex.Message);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                return Error.Validation("Path", "The file could not be written: " + ex.Message);
+            }
+
+            return await AuditAsync(rows.Select(r => (r.l.Id, r.l.Number)).ToList(), request.Path, cancellationToken).ConfigureAwait(false);
+        }
+
         var info = company.Company ?? throw new InvalidOperationException("Company is not loaded.");
         try
         {
@@ -447,8 +586,13 @@ public sealed class ReprintLettersHandler(IAppDbContext db, ICurrentUser user, I
             return Error.Validation("Path", "The file could not be written: " + ex.Message);
         }
 
-        audit.Record("Letter.Reprinted", $"Reprinted {string.Join(", ", rows.Select(r => r.l.Number))}");
+        return await AuditAsync(rows.Select(r => (r.l.Id, r.l.Number)).ToList(), request.Path, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Result<string>> AuditAsync(List<(Guid Id, string Number)> letters, string path, CancellationToken cancellationToken)
+    {
+        audit.Record("Letter.Reprinted", $"Reprinted {string.Join(", ", letters.Select(l => l.Number))}", nameof(IssuedLetter), letters[0].Id);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return request.Path;
+        return path;
     }
 }
