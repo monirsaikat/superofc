@@ -281,6 +281,28 @@ public class ImportTests
     }
 
     [Fact]
+    public async Task Fathers_name_is_an_optional_column_in_import_and_export()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var path = Path.Combine(host.Root, "fathers.csv");
+        await File.WriteAllTextAsync(path, "Code,Full name,Join date,Father's name\nF1,With Father,2025-01-01,Abdul Karim\nF2,Without Father,2025-01-01,\n");
+
+        (await host.SendOkAsync(new CommitEmployeeImportCommand(path, false))).Should().Be(2);
+        var people = (await host.SendOkAsync(new GetEmployeeListQuery())).Items;
+        (await host.SendOkAsync(new GetEmployeeQuery(people.Single(p => p.Code == "F1").Id))).FatherName.Should().Be("Abdul Karim");
+        (await host.SendOkAsync(new GetEmployeeQuery(people.Single(p => p.Code == "F2").Id))).FatherName.Should().BeNull();
+
+        var export = Path.Combine(host.Root, "fathers.xlsx");
+        await host.SendOkAsync(new ExportEmployeesQuery(export, new GetEmployeeListQuery()));
+        var rows = host.Services.GetRequiredService<ISpreadsheetService>().Read(export);
+        rows.Single(r => r["Code"] == "F1")[EmployeeImportColumns.FatherName].Should().Be("Abdul Karim");
+
+        var template = Path.Combine(host.Root, "template.xlsx");
+        await host.SendOkAsync(new WriteEmployeeImportTemplateCommand(template));
+        host.Services.GetRequiredService<ISpreadsheetService>().Read(template)[0][EmployeeImportColumns.FatherName].Should().Be("Karim Uddin");
+    }
+
+    [Fact]
     public async Task Missing_required_columns_are_reported()
     {
         await using var host = await TestHost.CreateAsync();

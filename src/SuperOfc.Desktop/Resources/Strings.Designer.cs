@@ -651,6 +651,8 @@ public static class Strings
 
     public static string Employee_ExitReason => Get("Employee_ExitReason");
 
+    public static string Employee_FatherName => Get("Employee_FatherName");
+
     public static string Employee_FullName => Get("Employee_FullName");
 
     public static string Employee_Gender => Get("Employee_Gender");
@@ -1260,6 +1262,8 @@ public static class Strings
     public static string Org_Name => Get("Org_Name");
 
     public static string Org_New => Get("Org_New");
+
+    public static string Org_ResponsibilitiesHint => Get("Org_ResponsibilitiesHint");
 
     public static string Org_SortOrder => Get("Org_SortOrder");
 

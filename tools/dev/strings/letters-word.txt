@@ -1,0 +1,3 @@
+# Word letter templates: father's name and designation responsibilities
+Employee_FatherName=Father's name
+Org_ResponsibilitiesHint=For designations: responsibilities, one per line. Letters print them with {Employee.Responsibilities}.

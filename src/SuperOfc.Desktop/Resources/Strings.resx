@@ -302,6 +302,7 @@
   <data name="Employee_Emergency" xml:space="preserve"><value>Emergency contact</value></data>
   <data name="Employee_Exit" xml:space="preserve"><value>Left on</value></data>
   <data name="Employee_ExitReason" xml:space="preserve"><value>Reason for leaving</value></data>
+  <data name="Employee_FatherName" xml:space="preserve"><value>Father's name</value></data>
   <data name="Employee_FullName" xml:space="preserve"><value>Full name</value></data>
   <data name="Employee_Gender" xml:space="preserve"><value>Gender</value></data>
   <data name="Employee_Grade" xml:space="preserve"><value>Grade</value></data>
@@ -613,6 +614,7 @@ For {Company.Name}</value></data>
   <data name="Org_Locations" xml:space="preserve"><value>Locations</value></data>
   <data name="Org_Name" xml:space="preserve"><value>Name</value></data>
   <data name="Org_New" xml:space="preserve"><value>New item</value></data>
+  <data name="Org_ResponsibilitiesHint" xml:space="preserve"><value>For designations: responsibilities, one per line. Letters print them with {Employee.Responsibilities}.</value></data>
   <data name="Org_SortOrder" xml:space="preserve"><value>Sort order</value></data>
   <data name="Pay_Bank" xml:space="preserve"><value>Bank</value></data>
   <data name="Pay_Cash" xml:space="preserve"><value>Cash</value></data>

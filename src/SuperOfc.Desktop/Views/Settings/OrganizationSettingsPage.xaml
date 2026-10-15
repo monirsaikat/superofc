@@ -50,7 +50,20 @@
         </StackPanel>
         <StackPanel Style="{StaticResource Field}">
           <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Org_Description}" />
-          <ui:TextBox Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}" />
+          <ui:TextBox
+              AcceptsReturn="True"
+              MaxLength="500"
+              MaxLines="10"
+              MinLines="3"
+              Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}"
+              TextWrapping="Wrap"
+              VerticalScrollBarVisibility="Auto" />
+          <TextBlock
+              Margin="0,4,0,0"
+              Style="{StaticResource Caption}"
+              Text="{x:Static res:Strings.Org_ResponsibilitiesHint}"
+              TextWrapping="Wrap"
+              Visibility="{Binding IsDesignation, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
         <StackPanel Style="{StaticResource Field}">
           <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Org_SortOrder}" />

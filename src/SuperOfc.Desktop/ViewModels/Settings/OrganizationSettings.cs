@@ -30,7 +30,11 @@ public sealed partial class OrganizationSettingsViewModel(PageServices services)
     public ObservableCollection<MasterDataDto> Items { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDesignation))]
     public partial MasterDataKind Kind { get; set; } = MasterDataKind.Department;
+
+    /// <summary>A designation's description lists its responsibilities, one per line, for <c>{Employee.Responsibilities}</c> in letters.</summary>
+    public bool IsDesignation => Kind == MasterDataKind.Designation;
 
     [ObservableProperty]
     public partial MasterDataDto? Selected { get; set; }

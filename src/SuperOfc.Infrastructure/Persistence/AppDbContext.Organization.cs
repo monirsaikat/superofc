@@ -67,6 +67,7 @@ internal sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.Phone).HasMaxLength(30);
         builder.Property(e => e.Email).HasMaxLength(150);
         builder.Property(e => e.NationalId).HasMaxLength(50);
+        builder.Property(e => e.FatherName).HasMaxLength(200);
         builder.Property(e => e.BankAccount).HasMaxLength(50);
         builder.Property(e => e.TaxIdentifier).HasMaxLength(50);
         builder.Property(e => e.CustomFieldsJson).HasMaxLength(int.MaxValue);

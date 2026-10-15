@@ -128,6 +128,42 @@ public class EmployeeFlowTests
     }
 
     [Fact]
+    public async Task Fathers_name_is_edited_on_the_profile_and_designations_list_responsibilities()
+    {
+        await using var host = await DesktopTestHost.CreateAsync(completeSetup: true);
+        await host.SignInAsync();
+        var navigation = host.Get<IAppNavigator>();
+
+        await navigation.NavigateToAsync<EmployeeDetailViewModel>();
+        var detail = (EmployeeDetailViewModel)navigation.Current!;
+        detail.FullName = "Rahim Uddin";
+        detail.FatherName = "Karim Uddin";
+        await detail.SaveCommand.ExecuteAsync(null);
+        detail.ErrorMessage.Should().BeNull();
+        var id = detail.EmployeeId!.Value;
+
+        await navigation.NavigateToAsync<EmployeesViewModel>();
+        await navigation.NavigateToAsync<EmployeeDetailViewModel>(id);
+        var reopened = (EmployeeDetailViewModel)navigation.Current!;
+        reopened.FatherName.Should().Be("Karim Uddin");
+        reopened.IsDirty.Should().BeFalse();
+
+        var org = host.Get<OrganizationSettingsViewModel>();
+        await org.OnNavigatedToAsync(null);
+        org.IsDesignation.Should().BeFalse();
+        org.Kind = MasterDataKind.Designation;
+        org.IsDesignation.Should().BeTrue();
+        await WaitUntilAsync(() => true);
+        org.NewCommand.Execute(null);
+        org.EditName = "Accountant";
+        org.EditDescription = "Prepare accounts\nCheck vouchers";
+        await org.SaveCommand.ExecuteAsync(null);
+        org.ErrorMessage.Should().BeNull();
+        await WaitUntilAsync(() => org.Items.Any(i => i.Name == "Accountant"));
+        org.Items.Single(i => i.Name == "Accountant").Description.Should().Be("Prepare accounts\nCheck vouchers");
+    }
+
+    [Fact]
     public async Task Admin_manages_departments_and_holidays_in_settings()
     {
         await using var host = await DesktopTestHost.CreateAsync(completeSetup: true);

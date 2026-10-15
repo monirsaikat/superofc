@@ -51,8 +51,9 @@ public sealed class GetLetterFieldsHandler(LetterData data) : IRequestHandler<Ge
         IReadOnlyList<LetterField> list =
         [
             .. LetterFields.All,
-            .. codes.Order(StringComparer.OrdinalIgnoreCase).Select(c => new LetterField("Salary." + c, $"Monthly amount of component {c}", Private: true)),
-            new("Input.Reason", "Typed when the letter is issued (any name after Input.)"),
+            .. codes.Order(StringComparer.OrdinalIgnoreCase)
+                .Select(c => new LetterField("Salary." + c, $"Monthly amount of component {c}", Private: true, Type: LetterFieldType.Money)),
+            new("Input.Reason", "Typed when the letter is issued (any name after Input.)", Type: LetterFieldType.Lines),
         ];
         return Result<IReadOnlyList<LetterField>>.Success(list);
     }
@@ -83,6 +84,12 @@ public sealed class SaveLetterTemplateHandler(IAppDbContext db, ICurrentUser use
         if (unknown.Count > 0)
         {
             return Error.Validation("Body", $"Unknown field: {string.Join(", ", unknown.Select(f => "{" + f + "}"))}. Pick fields from the list.");
+        }
+
+        var badFormats = LetterFields.FormatErrors(codes, request.Subject, request.Body);
+        if (badFormats.Count > 0)
+        {
+            return Error.Validation("Body", string.Join(" ", badFormats));
         }
 
         var name = request.Name.Trim();
@@ -215,8 +222,8 @@ public sealed class PreviewLetterHandler(IAppDbContext db, ICurrentUser user, IC
         v["Letter.Number"] = "(given when issued)";
         LetterIssue.AddInputs(v, request.Inputs);
         var missing = new List<string>();
-        var filledSubject = LetterText.Fill(subject, v, missing);
-        var filledBody = LetterText.Fill(body, v, missing);
+        var filledSubject = LetterText.Fill(subject, v.Resolve, missing);
+        var filledBody = LetterText.Fill(body, v.Resolve, missing);
         return new LetterPreview(filledSubject, filledBody, missing);
     }
 }
@@ -264,7 +271,7 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
 
         var values = await data.ValuesAsync(request.EmployeeIds, request.Date, usesSalary, cancellationToken).ConfigureAwait(false);
         var problems = new List<string>();
-        var letters = new List<(IssuedLetter Letter, Dictionary<string, string?> Values)>();
+        var letters = new List<(IssuedLetter Letter, LetterValues Values)>();
         foreach (var id in request.EmployeeIds.Distinct())
         {
             if (!values.TryGetValue(id, out var v))
@@ -275,8 +282,8 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
             LetterIssue.AddInputs(v, request.Inputs);
             v["Letter.Number"] = "#";
             var missing = new List<string>();
-            LetterText.Fill(template.Subject, v, missing);
-            LetterText.Fill(template.Body, v, missing);
+            LetterText.Fill(template.Subject, v.Resolve, missing);
+            LetterText.Fill(template.Body, v.Resolve, missing);
             if (missing.Count > 0)
             {
                 problems.Add($"{v["Employee.Code"]} {v["Employee.Name"]}: no {string.Join(", ", missing.Select(LetterIssue.Describe))}");
@@ -306,8 +313,8 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
             letter.TemplateName = template.Name;
             letter.Kind = template.Kind;
             letter.IssuedOn = request.Date;
-            letter.Subject = LetterText.Fill(template.Subject, v, ignored);
-            letter.Body = LetterText.Fill(template.Body, v, ignored);
+            letter.Subject = LetterText.Fill(template.Subject, v.Resolve, ignored);
+            letter.Body = LetterText.Fill(template.Body, v.Resolve, ignored);
             letter.IncludesSalary = usesSalary;
             letter.IssuedBy = user.DisplayName;
             db.IssuedLetters.Add(letter);
@@ -335,13 +342,10 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
 /// <summary>Helpers shared by preview, issue and reprint.</summary>
 public static class LetterIssue
 {
-    public static void AddInputs(Dictionary<string, string?> values, IReadOnlyDictionary<string, string?>? inputs)
+    public static void AddInputs(LetterValues values, IReadOnlyDictionary<string, string?>? inputs)
     {
         ArgumentNullException.ThrowIfNull(values);
-        foreach (var (name, value) in inputs ?? new Dictionary<string, string?>())
-        {
-            values[LetterText.InputGroup + "." + name] = value?.Trim();
-        }
+        values.AddInputs(inputs);
     }
 
     public static string Describe(string field)

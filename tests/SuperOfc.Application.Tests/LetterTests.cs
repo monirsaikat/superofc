@@ -145,4 +145,75 @@ public class LetterTests
         draft.Subject.Should().Be("To Ms. Rina Das");
         draft.Body.Should().Contain("47,500").And.Contain("50,500");
     }
+
+    [Fact]
+    public async Task Formats_father_name_responsibilities_and_currency_fill_the_letter()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var officer = await host.SendOkAsync(new SaveMasterDataCommand(MasterDataKind.Designation, null, "Accounts Officer", "AO",
+            "Prepare monthly accounts\r\nCheck vouchers", 0));
+        var karim = await host.SendOkAsync(new CreateEmployeeCommand(EmployeeTestData.Input("E1", "karim uddin", new DateOnly(2023, 6, 1)) with
+        {
+            Gender = Gender.Male, DesignationId = officer, FatherName = "  Abdul Karim  ",
+        }));
+        var rina = await host.SendOkAsync(new CreateEmployeeCommand(EmployeeTestData.Input("E2", "Rina Das", new DateOnly(2024, 3, 22)) with { Gender = Gender.Female }));
+        (await host.SendOkAsync(new GetEmployeeQuery(karim))).FatherName.Should().Be("Abdul Karim");
+        var components = await PayrollTestData.ComponentsAsync(host);
+        await host.SendOkAsync(new SaveSalaryAssignmentCommand(null, karim, new DateOnly(2025, 1, 1), null, null, PayrollTestData.Lines(components, 30_000)));
+
+        const string Body = "{Employee.Name:title}, {Employee.SonDaughter} of {Employee.FatherName:upper}, joined on {Employee.JoinDate:%d}{Employee.JoinDate:ord} "
+            + "{Employee.JoinDate:MMMM yyyy} ({Employee.JoinDate:MMMM d, yyyy}).\n\n{Employee.Responsibilities}\n\n"
+            + "Gross {Company.CurrencyCode} {Salary.Gross:n0} ({Company.CurrencySymbol} {Salary.Gross:n2}), {Salary.Gross:words} {Company.CurrencyCode} only.";
+        var preview = await host.SendOkAsync(new PreviewLetterQuery(karim, null, "{Employee.SonDaughter:cap} of {Employee.FatherName}", Body, Today, null));
+        preview.Missing.Should().BeEmpty();
+        preview.Subject.Should().Be("Son of Abdul Karim");
+        preview.Body.Should().Be("Karim Uddin, son of ABDUL KARIM, joined on 1st June 2023 (June 1, 2023).\n\nPrepare monthly accounts\nCheck vouchers\n\n"
+            + "Gross BDT 47,500 (Tk 47,500.00), Forty-Seven Thousand Five Hundred BDT only.");
+
+        var daughter = await host.SendOkAsync(new PreviewLetterQuery(rina, null, "{Employee.SonDaughter:cap}", "{Employee.JoinDate:d}{Employee.JoinDate:ord}", Today, null));
+        daughter.Subject.Should().Be("Daughter");
+        daughter.Body.Should().Be("22nd");
+
+        // A letter keeps the formatted text when issued.
+        var template = await host.SendOkAsync(new SaveLetterTemplateCommand(null, "Formats", LetterKind.Other, "{Employee.SonDaughter:cap} of {Employee.FatherName}", Body, "HR", true));
+        var issued = await host.SendOkAsync(new IssueLettersCommand(template, [karim], Today, null, Path.Combine(host.Root, "formats.pdf")));
+        var kept = await host.WithDbAsync(db => db.IssuedLetters.SingleAsync(l => l.Number == issued.Numbers[0]));
+        kept.Body.Should().Be(preview.Body);
+        kept.Subject.Should().Be("Son of Abdul Karim");
+
+        // Without a father's name the letter would have a blank.
+        (await host.SendFailAsync(new IssueLettersCommand(template, [rina], Today, null, Path.Combine(host.Root, "rina.pdf"))))
+            .Message.Should().Contain("E2 Rina Das: no father's name");
+    }
+
+    [Fact]
+    public async Task Templates_reject_unknown_formats_and_list_typed_fields()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var bad = await host.SendFailAsync(new SaveLetterTemplateCommand(null, "Bad", LetterKind.Other, "{Employee.Name:shout}",
+            "Joined {Employee.JoinDate:'abc} at {Salary.Gross:n0} and {Salary.BASIC:upper}", "HR", true));
+        bad.Code.Should().Be("Validation.Body");
+        bad.Message.Should().Contain("Unknown format \"shout\" in {Employee.Name:shout}.")
+            .And.Contain("Unknown format \"'abc\" in {Employee.JoinDate:'abc}.")
+            .And.Contain("Unknown format \"upper\" in {Salary.BASIC:upper}.")
+            .And.NotContain("Salary.Gross:n0");
+
+        await host.SendOkAsync(new SaveLetterTemplateCommand(null, "Good", LetterKind.Other, "{Employee.Name:upper}",
+            "{Employee.JoinDate:d MMMM yyyy} {Employee.JoinDate:ord} {Salary.BASIC:words} {Input.Reason:cap} {Employee.Responsibilities}", "HR", true));
+
+        // The standard letters still pass the checks.
+        foreach (var t in (await host.SendOkAsync(new GetLetterTemplatesQuery())).Where(t => t.Name != "Good"))
+        {
+            await host.SendOkAsync(new SaveLetterTemplateCommand(t.Id, t.Name, t.Kind, t.Subject, t.Body, t.NumberPrefix, t.IsActive));
+        }
+
+        var fields = await host.SendOkAsync(new GetLetterFieldsQuery());
+        fields.Should().Contain(f => f.Key == "Employee.FatherName" && f.Type == LetterFieldType.Text && !f.Private);
+        fields.Should().Contain(f => f.Key == "Employee.SonDaughter" && f.Type == LetterFieldType.Text);
+        fields.Should().Contain(f => f.Key == "Employee.Responsibilities" && f.Type == LetterFieldType.Lines);
+        fields.Should().Contain(f => f.Key == "Company.CurrencyCode").And.Contain(f => f.Key == "Company.CurrencySymbol");
+        fields.Should().Contain(f => f.Key == "Employee.JoinDate" && f.Type == LetterFieldType.Date);
+        fields.Should().Contain(f => f.Key == "Salary.BASIC" && f.Type == LetterFieldType.Money && f.Private);
+        fields.Should().Contain(f => f.Key == "Input.Reason" && f.Type == LetterFieldType.Lines);
+    }
 }

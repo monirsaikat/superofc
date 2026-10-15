@@ -121,6 +121,10 @@
                   </StackPanel>
                 </Grid>
                 <StackPanel Style="{StaticResource Field}">
+                  <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Employee_FatherName}" />
+                  <ui:TextBox MaxLength="200" Text="{Binding FatherName, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Style="{StaticResource Field}">
                   <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Employee_NationalId}" />
                   <ui:TextBox Text="{Binding NationalId, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
