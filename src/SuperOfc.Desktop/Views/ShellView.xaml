@@ -29,7 +29,7 @@
             ItemContainerStyle="{StaticResource NavListItem}"
             ItemTemplate="{StaticResource NavItemTemplate}"
             ItemsSource="{Binding FooterItems}"
-            SelectedItem="{Binding SelectedItem, Mode=TwoWay}" />
+            SelectedItem="{Binding SelectedFooterItem, Mode=TwoWay}" />
         <Separator Margin="4,8" />
         <Grid Margin="8,4">
           <Grid.ColumnDefinitions>
@@ -80,7 +80,7 @@
           ItemContainerStyle="{StaticResource NavListItem}"
           ItemTemplate="{StaticResource NavItemTemplate}"
           ItemsSource="{Binding Items}"
-          SelectedItem="{Binding SelectedItem, Mode=TwoWay}" />
+          SelectedItem="{Binding SelectedMainItem, Mode=TwoWay}" />
     </DockPanel>
 
     <!-- Content area -->
