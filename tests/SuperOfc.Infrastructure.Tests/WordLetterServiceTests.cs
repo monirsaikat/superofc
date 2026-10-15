@@ -338,6 +338,131 @@ public class WordLetterServiceTests
         CountOf(_service.Text(docx), "Note: THESOFTKING Limited shall not be held responsible").Should().Be(1);
     }
 
+    [Fact]
+    public void Field_split_by_a_comment_mark_or_soft_hyphen_is_filled()
+    {
+        var docx = Document(Body(
+            "<w:p><w:r><w:t xml:space=\"preserve\">Dear {Employee.</w:t></w:r><w:r><w:softHyphen/></w:r>"
+            + "<w:commentRangeStart w:id=\"0\"/><w:r><w:t>Na</w:t></w:r><w:commentRangeEnd w:id=\"0\"/>"
+            + "<w:r><w:commentReference w:id=\"0\"/></w:r><w:r><w:t>me}, welcome</w:t></w:r></w:p>"));
+        var missing = new List<string>();
+
+        _service.Inspect(docx).IsValid.Should().BeTrue();
+        using var document = Open(_service.Fill(docx, Resolve, missing));
+
+        missing.Should().BeEmpty();
+        var paragraph = document.MainDocumentPart!.Document.Body!.Elements<Paragraph>().Single();
+        paragraph.InnerText.Should().Be("Dear Rafa Islam, welcome");
+        paragraph.Descendants<SoftHyphen>().Should().BeEmpty("the soft hyphen was inside the field");
+        paragraph.Descendants<CommentReference>().Should().ContainSingle("the comment stays attached");
+    }
+
+    [Fact]
+    public void Field_split_by_a_footnote_reference_is_a_blank_and_fails_inspection()
+    {
+        var docx = Document(Body(
+            "<w:p><w:r><w:t xml:space=\"preserve\">Dear {Employee.</w:t></w:r><w:r><w:footnoteReference w:id=\"1\"/></w:r>"
+            + "<w:r><w:t>Name}, {Letter.Number}</w:t></w:r></w:p>"));
+        var missing = new List<string>();
+
+        using var document = Open(_service.Fill(docx, Resolve, missing));
+
+        missing.Should().Equal("Employee.Name");
+        document.MainDocumentPart!.Document.Body!.InnerText.Should().Be("Dear {Employee.Name}, HR/2026/0007");
+        var check = _service.Inspect(docx);
+        check.IsValid.Should().BeFalse();
+        check.Error.Should().Be("The field {Employee.Name} is split by a picture, footnote or field in Word; retype it and upload the file again.");
+    }
+
+    [Fact]
+    public void Control_characters_in_a_value_become_line_breaks_or_are_dropped()
+    {
+        var docx = Document(Body("<w:p><w:r><w:t xml:space=\"preserve\">Address: {Employee.Address}.</w:t></w:r></w:p>"));
+        string? Resolver(string key, string? format) => key == "Employee.Address" ? "Road 5\vDhaka\u0001 1207\fBD \U0001F600" : null;
+
+        using var document = Open(_service.Fill(docx, Resolver, new List<string>()));
+
+        var run = document.MainDocumentPart!.Document.Body!.Elements<Paragraph>().Single().Elements<Run>().Single();
+        run.Elements<Break>().Should().HaveCount(2);
+        run.Elements<WText>().Select(t => t.Text).Should().Equal("Address: Road 5", "Dhaka 1207", "BD \U0001F600.");
+    }
+
+    [Fact]
+    public void Lines_value_keeps_one_section_break_on_the_last_copy()
+    {
+        var docx = Document(Body(
+            "<w:p><w:pPr><w:sectPr><w:pgSz w:w=\"15840\" w:h=\"12240\" w:orient=\"landscape\"/></w:sectPr></w:pPr>"
+            + "<w:r><w:t>{Employee.Responsibilities}</w:t></w:r></w:p>"
+            + "<w:p><w:r><w:t>Next section</w:t></w:r></w:p><w:sectPr/>"));
+
+        using var document = Open(_service.Fill(docx, Resolve, new List<string>()));
+
+        var paragraphs = document.MainDocumentPart!.Document.Body!.Elements<Paragraph>().ToList();
+        paragraphs.Select(p => p.InnerText).Should().Equal("Lead the support team", "Write weekly reports", "Train new staff", "Next section");
+        paragraphs.Select(p => p.ParagraphProperties?.SectionProperties is not null).Should().Equal(false, false, true, false);
+        paragraphs[2].ParagraphProperties!.SectionProperties!.GetFirstChild<PageSize>()!.Orient!.Value.Should().Be(PageOrientationValues.Landscape);
+    }
+
+    [Fact]
+    public void Lines_value_copies_only_the_text_not_pictures_text_boxes_or_notes()
+    {
+        const string box = "<w:txbxContent><w:p><w:r><w:t>Note: {Employee.Name}</w:t></w:r></w:p></w:txbxContent>";
+        var docx = Document(Body(
+            "<w:p><w:r><mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:anchor><wp:extent cx=\"100\" cy=\"100\"/>"
+            + "<wp:docPr id=\"7\" name=\"Box\"/><a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
+            + "<wps:wsp><wps:txbx>" + box + "</wps:txbx><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing></mc:Choice>"
+            + "<mc:Fallback><w:pict><v:shape><v:textbox>" + box + "</v:textbox></v:shape></w:pict></mc:Fallback></mc:AlternateContent></w:r>"
+            + "<w:r><w:rPr><w:b/></w:rPr><w:t>{Employee.Address}</w:t></w:r><w:r><w:footnoteReference w:id=\"1\"/></w:r></w:p>"));
+        var missing = new List<string>();
+
+        using var document = Open(_service.Fill(docx, Resolve, missing));
+
+        missing.Should().BeEmpty();
+        var body = document.MainDocumentPart!.Document.Body!;
+        var paragraphs = body.Elements<Paragraph>().ToList();
+        paragraphs.Should().HaveCount(2);
+        paragraphs[1].InnerText.Should().Be("Dhaka 1207");
+        paragraphs[1].Elements<Run>().Single().RunProperties!.Bold.Should().NotBeNull();
+        paragraphs[1].Descendants().Where(e => e is Drawing or AlternateContent or FootnoteReference).Should().BeEmpty();
+        body.Descendants<FootnoteReference>().Should().ContainSingle();
+        CountOf(body.OuterXml, "docPr").Should().Be(1);
+        CountOf(body.OuterXml, "Note: Rafa Islam").Should().Be(2);
+        body.OuterXml.Should().NotContain("{Employee.Name}");
+    }
+
+    [Theory]
+    [InlineData("<w:fldSimple w:instr=\" IMPORT \\\\\\\\host\\\\s\\\\logo.png \"><w:r><w:t>x</w:t></w:r></w:fldSimple>", "IMPORT")]
+    [InlineData("<w:fldSimple w:instr=\" DATABASE \\d &quot;C:\\\\data.mdb&quot; \"><w:r><w:t>x</w:t></w:r></w:fldSimple>", "DATABASE")]
+    [InlineData("<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r><w:r><w:instrText xml:space=\"preserve\"> RD \"\\\\\\\\host\\\\x.docx\" </w:instrText></w:r>"
+        + "<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>", "RD")]
+    public void Inspect_rejects_IMPORT_DATABASE_and_RD_fields(string field, string name)
+    {
+        var check = _service.Inspect(Document(Body("<w:p>" + field + "</w:p>")));
+
+        check.IsValid.Should().BeFalse();
+        check.Error.Should().Contain($"has a {name} field");
+    }
+
+    [Fact]
+    public void Inspect_rejects_a_field_whose_name_comes_from_a_nested_field()
+    {
+        const string begin = "<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r>";
+        const string separate = "<w:r><w:fldChar w:fldCharType=\"separate\"/></w:r>";
+        const string end = "<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>";
+        static string Code(string text) => "<w:r><w:instrText xml:space=\"preserve\">" + text + "</w:instrText></w:r>";
+
+        var nested = Document(Body("<w:p>" + begin + Code(" ") + begin + Code("QUOTE \"INCLUDETEXT\"") + separate + "<w:r><w:t>INCLUDETEXT</w:t></w:r>" + end
+            + Code(" \"\\\\\\\\host\\\\s\\\\a.docx\" ") + separate + "<w:r><w:t>data</w:t></w:r>" + end + "</w:p>"));
+        var check = _service.Inspect(nested);
+        check.IsValid.Should().BeFalse();
+        check.Error.Should().Contain("built from another field");
+
+        // A field shown inside another field's result is fine.
+        var inResult = Document(Body("<w:p>" + begin + Code(" REF Intro ") + separate + begin + Code(" PAGE ") + separate + "<w:r><w:t>1</w:t></w:r>" + end
+            + end + "</w:p>"));
+        _service.Inspect(inResult).IsValid.Should().BeTrue();
+    }
+
     internal static string RepositoryRoot()
     {
         var folder = new DirectoryInfo(AppContext.BaseDirectory);
@@ -404,6 +529,33 @@ public class WordPdfConverterTests
         var act = () => converter.IsAvailable;
 
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Owned_processes_are_the_instance_window_process_when_found()
+    {
+        var before = new HashSet<int> { 10 };
+        (int, string?)[] running = [(10, "WINWORD.EXE /Automation -Embedding"), (20, "WINWORD.EXE /Automation -Embedding"), (30, null)];
+
+        WordPdfConverter.OwnedProcesses(30, before, running).Should().Equal(30);
+        WordPdfConverter.OwnedProcesses(10, before, running).Should().BeEmpty("a Word that ran before the batch is never stopped");
+    }
+
+    [Fact]
+    public void Owned_processes_without_a_window_are_only_new_COM_started_Word()
+    {
+        var before = new HashSet<int> { 1 };
+        (int, string?)[] running =
+        [
+            (1, "\"C:\\Office16\\WINWORD.EXE\" /Automation -Embedding"),
+            (2, "\"C:\\Office16\\WINWORD.EXE\" /n \"C:\\Users\\me\\letter.docx\""),
+            (3, "\"C:\\Office16\\WINWORD.EXE\" /Automation -Embedding"),
+            (4, null),
+        ];
+
+        WordPdfConverter.OwnedProcesses(null, before, running).Should().Equal(3);
+        WordPdfConverter.IsAutomation("WINWORD.EXE -Embedding").Should().BeTrue();
+        WordPdfConverter.IsAutomation("\"WINWORD.EXE\"").Should().BeFalse();
     }
 
     [Fact]

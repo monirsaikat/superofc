@@ -8,7 +8,9 @@ namespace SuperOfc.Infrastructure.Reporting;
 /// <summary>
 /// <see cref="IWordPdfConverter"/> through Microsoft Word itself (late-bound COM), so the PDF is exactly what Word prints.
 /// Each batch runs on its own STA thread with one hidden Word instance that never shows a dialog or runs macros. A document
-/// that takes longer than <see cref="DocumentTimeout"/> stops the Word process this batch started.
+/// that takes longer than <see cref="DocumentTimeout"/> stops the Word process this batch started. Only that process is ever
+/// stopped: it is found by its window, or else it must be new and started by COM (<c>/Automation</c>), so a Word the user opens
+/// meanwhile is never touched.
 /// </summary>
 public sealed class WordPdfConverter : IWordPdfConverter, IDisposable
 {
@@ -18,6 +20,7 @@ public sealed class WordPdfConverter : IWordPdfConverter, IDisposable
 
     private const string WordProgId = "Word.Application";
     private const string WordProcessName = "WINWORD";
+    private const string WordWindowClass = "OpusApp";
     private const int WdDoNotSaveChanges = 0;
     private const int WdAlertsNone = 0;
     private const int MsoAutomationSecurityForceDisable = 3;
@@ -41,7 +44,7 @@ public sealed class WordPdfConverter : IWordPdfConverter, IDisposable
             return;
         }
 
-        // One Word session at a time: the processes a batch started are found by comparing WINWORD before and after.
+        // One Word session at a time: the batch keeps the id of the one Word process it started.
         await _batchLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -110,11 +113,10 @@ public sealed class WordPdfConverter : IWordPdfConverter, IDisposable
             }
             finally
             {
-                var started = WordProcessIds();
-                started.ExceptWith(before);
+                var owned = OwnedProcesses(word is null ? null : WindowProcessId((object)word), before, RunningWord());
                 lock (_processLock)
                 {
-                    _batchProcesses = started;
+                    _batchProcesses = owned;
                 }
             }
 
@@ -248,6 +250,93 @@ public sealed class WordPdfConverter : IWordPdfConverter, IDisposable
         }
     }
 
+    /// <summary>
+    /// The Word processes this batch may stop: the one that owns the new instance's window when it was found (and did not run
+    /// before), otherwise every Word process that is new and was started by COM. A Word the user started is never included.
+    /// </summary>
+    internal static HashSet<int> OwnedProcesses(int? windowProcessId, IReadOnlySet<int> before, IEnumerable<(int Id, string? CommandLine)> running)
+    {
+        if (windowProcessId is { } id)
+        {
+            return before.Contains(id) ? [] : [id];
+        }
+
+        return [.. running.Where(p => !before.Contains(p.Id) && IsAutomation(p.CommandLine)).Select(p => p.Id)];
+    }
+
+    /// <summary>True for a Word started by COM (<c>WINWORD.EXE /Automation -Embedding</c>); false when the command line is unknown.</summary>
+    internal static bool IsAutomation(string? commandLine)
+        => commandLine is not null
+            && (commandLine.Contains("/Automation", StringComparison.OrdinalIgnoreCase) || commandLine.Contains("-Embedding", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The process of a Word instance, found by giving its hidden main window a unique caption; null when not found.</summary>
+    private static int? WindowProcessId(object application)
+    {
+        try
+        {
+            var caption = $"SuperOfc {Guid.NewGuid():N}";
+            ((dynamic)application).Caption = caption;
+            var window = NativeMethods.FindWindow(WordWindowClass, caption);
+            return window != IntPtr.Zero && NativeMethods.GetWindowThreadProcessId(window, out var id) != 0 && id > 0 ? id : null;
+        }
+        catch (Exception ex) when (ex is COMException or InvalidComObjectException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Running Word processes with their command lines, read only when enumerated.</summary>
+    private static IEnumerable<(int Id, string? CommandLine)> RunningWord()
+    {
+        foreach (var id in WordProcessIds())
+        {
+            yield return (id, CommandLine(id));
+        }
+    }
+
+    /// <summary>The command line of a process, or null when it cannot be read.</summary>
+    private static string? CommandLine(int processId)
+    {
+        const int ProcessQueryLimitedInformation = 0x1000;
+        const int ProcessCommandLineInformation = 60;
+        var process = NativeMethods.OpenProcess(ProcessQueryLimitedInformation, false, processId);
+        if (process == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        try
+        {
+            _ = NativeMethods.NtQueryInformationProcess(process, ProcessCommandLineInformation, IntPtr.Zero, 0, out var size);
+            if (size <= 0)
+            {
+                return null;
+            }
+
+            var buffer = Marshal.AllocHGlobal(size);
+            try
+            {
+                if (NativeMethods.NtQueryInformationProcess(process, ProcessCommandLineInformation, buffer, size, out _) != 0)
+                {
+                    return null;
+                }
+
+                // UNICODE_STRING: ushort Length (bytes), ushort MaximumLength, then the pointer at the next pointer boundary.
+                var length = (ushort)Marshal.ReadInt16(buffer);
+                var text = Marshal.ReadIntPtr(buffer, IntPtr.Size);
+                return text == IntPtr.Zero ? null : Marshal.PtrToStringUni(text, length / 2);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+        }
+        finally
+        {
+            _ = NativeMethods.CloseHandle(process);
+        }
+    }
+
     private static HashSet<int> WordProcessIds()
     {
         var ids = new HashSet<int>();
@@ -337,4 +426,20 @@ internal static class NativeMethods
 {
     [DllImport("ole32.dll")]
     internal static extern int CoRegisterMessageFilter(IMessageFilter? newFilter, out IMessageFilter? oldFilter);
+
+    [DllImport("user32.dll", EntryPoint = "FindWindowW", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    internal static extern IntPtr FindWindow(string? className, string? windowName);
+
+    [DllImport("user32.dll")]
+    internal static extern int GetWindowThreadProcessId(IntPtr window, out int processId);
+
+    [DllImport("kernel32.dll")]
+    internal static extern IntPtr OpenProcess(int access, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, int processId);
+
+    [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("ntdll.dll")]
+    internal static extern int NtQueryInformationProcess(IntPtr process, int informationClass, IntPtr information, int length, out int returnLength);
 }

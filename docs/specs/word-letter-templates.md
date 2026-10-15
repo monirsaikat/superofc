@@ -63,17 +63,22 @@ field superscript in Word. The filled value takes the formatting of the run wher
   `Subject` is still edited in settings (used for the register and file names).
 - Upload rules (Application command, Infrastructure check): `.docx` only, at most 10 MB, not macro-enabled (`.docm` content type or
   `vbaProject` part), not encrypted or password protected, no external relationships other than `http`, `https` and `mailto`
-  hyperlinks, no `altChunk`, no `INCLUDETEXT`, `INCLUDEPICTURE`, `LINK`, `DDE`, `DDEAUTO` fields, no `w:updateFields`.
-  Unknown fields or formats are a validation error listing them.
+  hyperlinks, no `altChunk`, no `INCLUDETEXT`, `INCLUDE`, `INCLUDEPICTURE`, `IMPORT`, `LINK`, `DDE`, `DDEAUTO`, `DATABASE`, `RD`
+  fields, no field whose instruction contains another field, no `w:updateFields`, no `{field}` split by a picture, note reference,
+  symbol or field code. Unknown fields or formats are a validation error listing them.
 - Filling (Infrastructure, Open XML SDK 3.1.1, direct package reference): per paragraph, join the text of all `w:t` in runs that
   are children of the paragraph (also inside `w:hyperlink`, `w:smartTag`, `w:fldSimple`, `w:ins`), skipping `w:proofErr`,
-  bookmarks, `w:lastRenderedPageBreak`; a `w:tab`, `w:br`, `w:cr` or drawing inside a run ends a segment so a field never spans
-  it. Run `LetterText.Plan` on the joined text, then write each value into the `w:t` where the field starts (keeping that run's
-  `rPr`), remove the covered characters from following `w:t`, and drop runs left empty. Set `xml:space="preserve"`.
+  bookmarks, `w:lastRenderedPageBreak`, `w:commentReference`; a `w:tab`, `w:br`, `w:cr`, drawing, note reference, symbol or field
+  code inside a run ends a segment so a field never spans it (a `w:softHyphen` does not; one inside a field is removed). Run
+  `LetterText.Plan` on the joined text, then write each value into the `w:t` where the field starts (keeping that run's `rPr`),
+  remove the covered characters from following `w:t`, and drop runs left empty. Set `xml:space="preserve"`. A field with a value
+  that still cannot be filled is added to `missing`, so it blocks issuing like a blank. Values are made XML-safe first: vertical
+  tab and form feed become line breaks, other characters XML 1.0 does not allow are dropped.
   Parts: main document, every header and footer, footnotes, endnotes. `Descendants<Paragraph>()` reaches tables and text boxes
   (both the `mc:Choice` and `mc:Fallback` copies of a text box must be filled). Remove `w:proofErr`; remove `w:proofState` from
   settings. Multi-line values: if the field is the whole text of its paragraph, clone the paragraph once per line (bullets repeat);
-  otherwise insert `w:br` between lines.
+  otherwise insert `w:br` between lines. Copies hold only the text runs (no drawings, text boxes, objects, note or comment marks,
+  fields or bookmarks), and a section break (`w:sectPr`) moves to the last copy.
 - Issuing a Word template: fill per employee, keep the filled file in `IssuedLetterDocument`, store `Subject` and the filled text
   (truncated to 20,000) in `IssuedLetter` with `HasDocument = true`.
   - Output format `Pdf` (made by Word via `IWordPdfConverter`, needs Word installed) or `Word` (.docx as filled).
@@ -86,7 +91,9 @@ field superscript in Word. The filled value takes the formatting of the run wher
   `Visible=false`, `DisplayAlerts=0`, `AutomationSecurity=3`, `Documents.Open(path, ConfirmConversions:false, ReadOnly:true,
   AddToRecentFiles:false, PasswordDocument:"", WritePasswordDocument:"")` (positional), `ExportAsFixedFormat(pdf, 17)`,
   `Close(0)`, `Quit(0)`, release COM objects; an `IMessageFilter` retries busy calls; per-document timeout 120 s, then kill the
-  WINWORD process this session started. Word missing: `IsAvailable` false and a clear message. Tests never start Word unless the
+  WINWORD process this session started: found by setting a unique `Caption` and reading the process of that `OpusApp` window, or
+  else only a new process whose command line has `/Automation` or `-Embedding`. A Word that ran before, or that the user starts,
+  is never killed. Word missing: `IsAvailable` false and a clear message. Tests never start Word unless the
   environment variable `SUPEROFC_WORD_TESTS=1` is set.
 
 ## Permissions and audit
