@@ -46,15 +46,25 @@ public partial class LetterTemplatesSettingsPage : UserControl
         _target.Focus();
     }
 
-    private static void OnCopyRequested(object? sender, string token)
+    /// <summary>Copies the field, retrying briefly while another program holds the clipboard; reports whether it worked.</summary>
+    private static void OnCopyRequested(object? sender, LetterFieldCopyEventArgs e)
     {
-        try
+        const int Attempts = 3;
+        for (var attempt = 1; attempt <= Attempts && !e.Copied; attempt++)
         {
-            Clipboard.SetText(token);
-        }
-        catch (System.Runtime.InteropServices.ExternalException)
-        {
-            // Another program holds the clipboard; the field is still shown in the list.
+            try
+            {
+                Clipboard.SetText(e.Token);
+                e.Copied = true;
+            }
+            catch (System.Runtime.InteropServices.ExternalException) when (attempt < Attempts)
+            {
+                Thread.Sleep(100);
+            }
+            catch (System.Runtime.InteropServices.ExternalException)
+            {
+                // Another program still holds the clipboard; the view model shows an error instead of "Copied".
+            }
         }
     }
 }

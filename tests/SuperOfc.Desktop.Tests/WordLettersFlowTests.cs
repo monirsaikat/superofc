@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -6,6 +7,7 @@ using SuperOfc.Application.Employees;
 using SuperOfc.Application.Letters;
 using SuperOfc.Application.Organization;
 using SuperOfc.Desktop.Resources;
+using SuperOfc.Desktop.Services;
 using SuperOfc.Desktop.Tests.Support;
 using SuperOfc.Desktop.ViewModels.Letters;
 using SuperOfc.Domain.Employees;
@@ -92,6 +94,25 @@ public class WordLettersFlowTests
         return result.Value;
     }
 
+    private static async Task<LetterTemplatesSettingsViewModel> SettingsPageAsync(DesktopTestHost host)
+    {
+        var page = host.Get<LetterTemplatesSettingsViewModel>();
+        page.PreviewDelay = TimeSpan.Zero;
+        page.TempFolder = host.Root;
+        await page.OnNavigatedToAsync(null);
+        return page;
+    }
+
+    /// <summary>Settings page with an uploaded Word template selected.</summary>
+    private static async Task<LetterTemplatesSettingsViewModel> WordTemplatePageAsync(DesktopTestHost host)
+    {
+        var template = await ImportAsync(host);
+        var page = await SettingsPageAsync(host);
+        page.Selected = page.Templates.Single(t => t.Id == template);
+        page.IsWord.Should().BeTrue();
+        return page;
+    }
+
     private static bool IsDocx(string path) => File.ReadAllBytes(path).AsSpan().StartsWith("PK"u8);
 
     [Fact]
@@ -100,9 +121,7 @@ public class WordLettersFlowTests
         await using var host = await CreateHostAsync(wordInstalled: true);
         await host.SignInAsync();
         var (karim, _) = await EmployeesAsync(host);
-        var page = host.Get<LetterTemplatesSettingsViewModel>();
-        page.PreviewDelay = TimeSpan.Zero;
-        await page.OnNavigatedToAsync(null);
+        var page = await SettingsPageAsync(host);
         page.IsWord.Should().BeFalse("the standard letters are text templates");
 
         host.Files.OpenFile(default!, default).ReturnsForAnyArgs(Sample(host, "Experience certificate.docx"));
@@ -121,11 +140,16 @@ public class WordLettersFlowTests
         // Fields are copied for Word, not inserted into a box.
         string? copied = null;
         string? inserted = null;
-        page.CopyRequested += (_, token) => copied = token;
+        page.CopyRequested += (_, e) =>
+        {
+            copied = e.Token;
+            e.Copied = true;
+        };
         page.InsertRequested += (_, token) => inserted = token;
         page.InsertCommand.Execute(page.Fields.First(f => f.Key == "Employee.Name"));
         copied.Should().Be("{Employee.Name}");
         inserted.Should().BeNull();
+        host.Get<INotificationService>().Received().Toast(string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_Copied, "{Employee.Name}"));
 
         // The text preview still fills the document text for the sample employee.
         page.SampleEmployeeId = karim;
@@ -136,7 +160,7 @@ public class WordLettersFlowTests
         page.HasEditedFile.Should().BeFalse();
         await page.EditInWordCommand.ExecuteAsync(null);
         var edited = page.EditedPath.Should().NotBeNull().And.Subject.As<string>();
-        edited.Should().EndWith(".docx").And.Contain(Path.Combine("SuperOfc", "templates"));
+        edited.Should().EndWith(".docx").And.StartWith(Path.Combine(host.Root, "templates", added.Id.ToString("N")), "the test's own folder, one per template");
         File.ReadAllBytes(edited).Should().Equal(File.ReadAllBytes(Sample(host, "Experience certificate.docx")));
         host.Files.Received().ShellOpen(edited);
         page.HasEditedFile.Should().BeTrue();
@@ -264,6 +288,7 @@ public class WordLettersFlowTests
         var template = await ImportAsync(host);
 
         var page = host.Get<LettersViewModel>();
+        page.TempFolder = host.Root;
         await page.OnNavigatedToAsync(new LettersTarget([karim], template));
         page.Template!.Id.Should().Be(template);
         page.WordInstalled.Should().BeTrue();
@@ -299,5 +324,176 @@ public class WordLettersFlowTests
         host.Files.Received().SaveFile(Strings.Letters_PdfOrWordFilter, Arg.Is<string>(n => n.EndsWith(".pdf", StringComparison.Ordinal)));
         File.ReadAllBytes(Path.Combine(host.Root, "copy.pdf")).AsSpan().StartsWith(FakeWordPdfConverter.Marker).Should().BeTrue();
         shell.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Use_saved_changes_reads_the_file_while_word_keeps_it_open()
+    {
+        await using var host = await CreateHostAsync(wordInstalled: true);
+        await host.SignInAsync();
+        var page = await WordTemplatePageAsync(host);
+        await page.EditInWordCommand.ExecuteAsync(null);
+        var edited = page.EditedPath!;
+        File.Copy(Sample(host, "NOC letter.docx"), edited, overwrite: true);
+
+        // Word keeps the document it shows open for writing; a plain read of it fails.
+        using (new FileStream(edited, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+        {
+            await page.UseSavedChangesCommand.ExecuteAsync(null);
+        }
+
+        page.ErrorMessage.Should().BeNull();
+        page.Body.Should().NotContain("{Employee.FatherName}", "the NOC letter's text was uploaded");
+        page.Selected!.DocumentFileName.Should().Be(Path.GetFileName(edited));
+        Directory.GetFiles(Path.Combine(host.Root, "upload"), Path.GetFileName(edited), SearchOption.AllDirectories)
+            .Should().BeEmpty("the copy read for the upload is deleted");
+
+        // A file held exclusively cannot be read at all: the message says what to do.
+        File.Copy(Sample(host, "Experience certificate.docx"), edited, overwrite: true);
+        using (new FileStream(edited, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            await page.UseSavedChangesCommand.ExecuteAsync(null);
+        }
+
+        page.ErrorMessage.Should().Be(Strings.LetterTemplates_CloseInWord);
+        page.Body.Should().NotContain("{Employee.FatherName}", "nothing was uploaded");
+    }
+
+    [Theory]
+    [InlineData("letter.pdf", 2, "letter.docx")]
+    [InlineData("letter.docx", 1, "letter.pdf")]
+    [InlineData("letter.pdf", 1, "letter.pdf")]
+    [InlineData("letter.docx", 2, "letter.docx")]
+    [InlineData("letter.txt", 2, "letter.txt")]
+    [InlineData("letter.pdf", 3, "letter.pdf")]
+    public void Save_dialog_gives_the_name_the_extension_of_the_type_picked(string name, int filterIndex, string expected)
+        => FileDialogService.WithFilterExtension(name, Strings.Letters_PdfOrWordFilter, filterIndex).Should().Be(expected);
+
+    [Fact]
+    public void Save_dialog_starts_on_the_type_of_the_default_name()
+    {
+        FileDialogService.FilterIndexFor(Strings.Letters_PdfOrWordFilter, "a.pdf").Should().Be(1);
+        FileDialogService.FilterIndexFor(Strings.Letters_PdfOrWordFilter, "a.DOCX").Should().Be(2);
+        FileDialogService.FilterIndexFor(Strings.Letters_PdfOrWordFilter, "a").Should().Be(1);
+        FileDialogService.WithFilterExtension("a.xlsx", "Excel (*.xlsx)|*.xlsx|All files (*.*)|*.*", 2).Should().Be("a.xlsx");
+    }
+
+    [Fact]
+    public async Task Word_actions_save_edits_to_the_template_first()
+    {
+        await using var host = await CreateHostAsync(wordInstalled: true);
+        await host.SignInAsync();
+        var page = await WordTemplatePageAsync(host);
+        var id = page.Selected!.Id;
+        await page.EditInWordCommand.ExecuteAsync(null);
+
+        page.Subject = "Certificate for {Employee.Name}";
+        page.IsDirty.Should().BeTrue();
+        await page.UseSavedChangesCommand.ExecuteAsync(null);
+        page.ErrorMessage.Should().BeNull();
+        page.IsDirty.Should().BeFalse();
+        page.Subject.Should().Be("Certificate for {Employee.Name}", "the typed subject is not thrown away");
+        page.Templates.Single(t => t.Id == id).Subject.Should().Be("Certificate for {Employee.Name}");
+
+        page.Name = "Experience (Word)";
+        host.Files.OpenFile(default!, default).ReturnsForAnyArgs(Sample(host, "NOC letter.docx"));
+        await page.ReplaceWordCommand.ExecuteAsync(null);
+        page.Name.Should().Be("Experience (Word)");
+        page.Templates.Single(t => t.Id == id).Name.Should().Be("Experience (Word)");
+
+        page.Subject = "Removed {Employee.Name}";
+        host.Dialogs.ConfirmAsync(default!, default!, default!, default).ReturnsForAnyArgs(true);
+        await page.RemoveWordCommand.ExecuteAsync(null);
+        page.IsWord.Should().BeFalse();
+        page.Templates.Single(t => t.Id == id).Subject.Should().Be("Removed {Employee.Name}");
+
+        // Edits that cannot be saved stop the action and show the error.
+        var word = await ImportAsync(host);
+        await page.OnNavigatedToAsync(word);
+        page.Selected!.Id.Should().Be(word);
+        page.Name = string.Empty;
+        host.Files.ClearReceivedCalls();
+        await page.EditInWordCommand.ExecuteAsync(null);
+        page.HasErrors.Should().BeTrue();
+        host.Files.DidNotReceiveWithAnyArgs().ShellOpen(default!);
+    }
+
+    [Fact]
+    public async Task Edit_in_word_does_not_overwrite_changes_saved_in_word_but_not_used()
+    {
+        await using var host = await CreateHostAsync(wordInstalled: true);
+        await host.SignInAsync();
+        var page = await WordTemplatePageAsync(host);
+        await page.EditInWordCommand.ExecuteAsync(null);
+        var edited = page.EditedPath!;
+
+        // Opening it again before any edit simply opens the file.
+        await page.EditInWordCommand.ExecuteAsync(null);
+        await host.Dialogs.DidNotReceiveWithAnyArgs().ConfirmAsync(default!, default!, default!, default);
+
+        // Saved in Word, closed without "Use saved changes", then another template and back.
+        var noc = File.ReadAllBytes(Sample(host, "NOC letter.docx"));
+        File.WriteAllBytes(edited, noc);
+        page.Selected = page.Templates.First(t => !t.IsWord);
+        page.Selected = page.Templates.Single(t => t.IsWord);
+        page.HasEditedFile.Should().BeFalse();
+
+        // Cancel both questions: the file keeps the edits and can still be used.
+        await page.EditInWordCommand.ExecuteAsync(null);
+        await host.Dialogs.Received().ConfirmAsync(Strings.LetterTemplates_UnusedEditsTitle, Arg.Any<string>(), Strings.LetterTemplates_UseSavedChanges, Arg.Any<bool>());
+        await host.Dialogs.Received().ConfirmAsync(Strings.LetterTemplates_StartAgainTitle, Arg.Any<string>(), Strings.LetterTemplates_StartAgain, true);
+        File.ReadAllBytes(edited).Should().Equal(noc);
+        page.EditedPath.Should().Be(edited);
+        page.Body.Should().Contain("{Employee.FatherName}", "nothing was uploaded");
+
+        // Use them: they are uploaded and the file opens again.
+        host.Files.ClearReceivedCalls();
+        host.Dialogs.ConfirmAsync(Strings.LetterTemplates_UnusedEditsTitle, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(true);
+        await page.EditInWordCommand.ExecuteAsync(null);
+        page.ErrorMessage.Should().BeNull();
+        page.Body.Should().NotContain("{Employee.FatherName}");
+        File.ReadAllBytes(edited).Should().Equal(noc);
+        host.Files.Received().ShellOpen(edited);
+
+        // Start again: the stored file replaces the edits.
+        File.WriteAllBytes(edited, File.ReadAllBytes(Sample(host, "Experience certificate.docx")));
+        host.Dialogs.ConfirmAsync(Strings.LetterTemplates_UnusedEditsTitle, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(false);
+        host.Dialogs.ConfirmAsync(Strings.LetterTemplates_StartAgainTitle, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(true);
+        await page.EditInWordCommand.ExecuteAsync(null);
+        File.ReadAllBytes(edited).Should().Equal(noc, "the stored file is the NOC letter");
+    }
+
+    [Fact]
+    public async Task Copied_is_shown_only_when_the_clipboard_took_the_field()
+    {
+        await using var host = await CreateHostAsync(wordInstalled: true);
+        await host.SignInAsync();
+        var page = await WordTemplatePageAsync(host);
+        var notify = host.Get<INotificationService>();
+        page.CopyRequested += (_, e) => e.Copied = false;
+
+        page.InsertCommand.Execute(page.Fields.First(f => f.Key == "Employee.Name"));
+
+        notify.DidNotReceive().Toast(string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_Copied, "{Employee.Name}"), Arg.Any<Wpf.Ui.Controls.ControlAppearance>());
+        notify.Received().ToastError(string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_CopyFailed, "{Employee.Name}"));
+    }
+
+    [Fact]
+    public void Edit_files_are_kept_per_template_under_the_given_folder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "superofc-desktop-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var a = WordLetterPaths.ForEditing(root, Guid.NewGuid(), "NOC/A");
+            var b = WordLetterPaths.ForEditing(root, Guid.NewGuid(), "NOC:A");
+            a.Should().NotBe(b, "names that differ only in characters a file name cannot hold still get their own file");
+            Path.GetFileName(a).Should().Be(Path.GetFileName(b));
+            a.Should().StartWith(root);
+            WordLetterPaths.ForSample(root, "NOC").Should().StartWith(Path.Combine(root, "samples"));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 }

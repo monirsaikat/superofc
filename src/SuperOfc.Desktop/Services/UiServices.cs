@@ -416,8 +416,52 @@ public sealed class FileDialogService : IFileDialogService
 
     public string? SaveFile(string filter, string defaultFileName)
     {
-        var dialog = new SaveFileDialog { Filter = filter, FileName = defaultFileName };
-        return dialog.ShowDialog() == true ? dialog.FileName : null;
+        var dialog = new SaveFileDialog { Filter = filter, FileName = defaultFileName, FilterIndex = FilterIndexFor(filter, defaultFileName) };
+        return dialog.ShowDialog() == true ? WithFilterExtension(dialog.FileName, filter, dialog.FilterIndex) : null;
+    }
+
+    /// <summary>The 1-based filter whose extensions include the file name's, so the type box starts on the default name's type.</summary>
+    public static int FilterIndexFor(string filter, string fileName)
+    {
+        var extension = Path.GetExtension(fileName);
+        var index = Extensions(filter).FindIndex(list => list.Contains(extension, StringComparer.OrdinalIgnoreCase));
+        return index < 0 ? 1 : index + 1;
+    }
+
+    /// <summary>
+    /// The dialog keeps a typed or default extension even when another type is picked (it only adds one to a name without any),
+    /// so "letter.pdf" saved with the Word filter would still be a PDF. When the name ends with another offered type's extension,
+    /// it is changed to the chosen type's.
+    /// </summary>
+    public static string WithFilterExtension(string fileName, string filter, int filterIndex)
+    {
+        ArgumentNullException.ThrowIfNull(fileName);
+        var all = Extensions(filter);
+        if (filterIndex < 1 || filterIndex > all.Count || all[filterIndex - 1].Count == 0)
+        {
+            return fileName;
+        }
+
+        var chosen = all[filterIndex - 1];
+        var extension = Path.GetExtension(fileName);
+        var otherType = !chosen.Contains(extension, StringComparer.OrdinalIgnoreCase)
+                        && all.Any(list => list.Contains(extension, StringComparer.OrdinalIgnoreCase));
+        return otherType ? Path.ChangeExtension(fileName, chosen[0]) : fileName;
+    }
+
+    /// <summary>The extensions (".pdf") of each filter pair; a wildcard type such as *.* has none.</summary>
+    private static List<List<string>> Extensions(string filter)
+    {
+        var parts = (filter ?? string.Empty).Split('|');
+        var result = new List<List<string>>();
+        for (var i = 1; i < parts.Length; i += 2)
+        {
+            result.Add([.. parts[i].Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Where(p => p.StartsWith("*.", StringComparison.Ordinal) && p.Length > 2 && p.IndexOf('*', 1) < 0)
+                .Select(p => p[1..])]);
+        }
+
+        return result;
     }
 
     public string? PickFolder(string title)

@@ -1045,7 +1045,11 @@ public static class Strings
 
     public static string LetterTemplates_Body => Get("LetterTemplates_Body");
 
+    public static string LetterTemplates_CloseInWord => Get("LetterTemplates_CloseInWord");
+
     public static string LetterTemplates_Copied => Get("LetterTemplates_Copied");
+
+    public static string LetterTemplates_CopyFailed => Get("LetterTemplates_CopyFailed");
 
     public static string LetterTemplates_DeleteMessage => Get("LetterTemplates_DeleteMessage");
 
@@ -1089,7 +1093,17 @@ public static class Strings
 
     public static string LetterTemplates_StandardAdded => Get("LetterTemplates_StandardAdded");
 
+    public static string LetterTemplates_StartAgain => Get("LetterTemplates_StartAgain");
+
+    public static string LetterTemplates_StartAgainMessage => Get("LetterTemplates_StartAgainMessage");
+
+    public static string LetterTemplates_StartAgainTitle => Get("LetterTemplates_StartAgainTitle");
+
     public static string LetterTemplates_Subject => Get("LetterTemplates_Subject");
+
+    public static string LetterTemplates_UnusedEditsMessage => Get("LetterTemplates_UnusedEditsMessage");
+
+    public static string LetterTemplates_UnusedEditsTitle => Get("LetterTemplates_UnusedEditsTitle");
 
     public static string LetterTemplates_UseSavedChanges => Get("LetterTemplates_UseSavedChanges");
 
