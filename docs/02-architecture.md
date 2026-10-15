@@ -270,7 +270,8 @@ Install: %LocalAppData%\SuperOfc\  (Velopack default)
 - Issued letters keep the rendered text. A letter is a legal record: a reprint must match the signed copy,
   so it never re-renders from the current data.
 - One PDF renderer (`ILetterPdfService`) draws the letterhead from company settings, the reference number
-  and date, the subject and paragraphs. Word output, signatures and letter approval are open (Q51–Q54).
+  and date, the subject and paragraphs for text templates. Word templates and Word output are covered by ADR-24;
+  signatures and letter approval are open (Q52, Q54).
 
 ### ADR-24 — Word files as letter templates; Word makes the PDF (implemented after Phase 8)
 

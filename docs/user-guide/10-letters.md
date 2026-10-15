@@ -82,7 +82,7 @@ Go to **Letters** in the menu, or open an employee and click **Letters › New l
 1. On the left, tick the people. Use the department list, the search box and **Select all** to pick many people at once.
 2. Choose the template and the date. Fill any boxes the template asks for.
 3. Check the preview. It shows the letter for the first person ticked.
-4. Tick **Save a separate PDF for each person** if you want one file each. Otherwise all letters go into one PDF, one letter per page.
+4. Tick **Save a separate PDF for each person** if you want one file each. Otherwise all letters go into one PDF, one letter per page. For a Word template, choose **PDF** or **Word document** under **Save as**; letters for several people are always one file each.
 5. Click **Issue and save PDF**.
 
 If any person is missing a detail the letter needs, such as a designation or department, nothing is printed. The message lists each person and what is missing. Fill those details in the employee record, then issue again.
