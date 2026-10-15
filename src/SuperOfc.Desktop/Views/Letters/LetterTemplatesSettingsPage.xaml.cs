@@ -4,7 +4,10 @@ using SuperOfc.Desktop.ViewModels.Letters;
 
 namespace SuperOfc.Desktop.Views.Letters;
 
-/// <summary>Puts a chosen field at the caret of the subject or letter box, whichever had focus last.</summary>
+/// <summary>
+/// Puts a chosen field at the caret of the subject or letter box, whichever had focus last; for Word templates the field is
+/// copied to the clipboard to paste into Word.
+/// </summary>
 public partial class LetterTemplatesSettingsPage : UserControl
 {
     private LetterTemplatesSettingsViewModel? _viewModel;
@@ -24,12 +27,14 @@ public partial class LetterTemplatesSettingsPage : UserControl
         if (_viewModel is not null)
         {
             _viewModel.InsertRequested -= OnInsertRequested;
+            _viewModel.CopyRequested -= OnCopyRequested;
         }
 
         _viewModel = DataContext as LetterTemplatesSettingsViewModel;
         if (_viewModel is not null)
         {
             _viewModel.InsertRequested += OnInsertRequested;
+            _viewModel.CopyRequested += OnCopyRequested;
         }
     }
 
@@ -39,5 +44,17 @@ public partial class LetterTemplatesSettingsPage : UserControl
         _target.Text = _target.Text.Insert(caret, token);
         _target.CaretIndex = caret + token.Length;
         _target.Focus();
+    }
+
+    private static void OnCopyRequested(object? sender, string token)
+    {
+        try
+        {
+            Clipboard.SetText(token);
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            // Another program holds the clipboard; the field is still shown in the list.
+        }
     }
 }

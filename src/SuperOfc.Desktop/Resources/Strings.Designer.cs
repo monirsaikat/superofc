@@ -993,11 +993,23 @@ public static class Strings
 
     public static string Letters_IssueTab => Get("Letters_IssueTab");
 
+    public static string Letters_IssueWord => Get("Letters_IssueWord");
+
     public static string Letters_New => Get("Letters_New");
 
     public static string Letters_Number => Get("Letters_Number");
 
     public static string Letters_OnePerEmployee => Get("Letters_OnePerEmployee");
+
+    public static string Letters_OnePerEmployeeFile => Get("Letters_OnePerEmployeeFile");
+
+    public static string Letters_OutputPdf => Get("Letters_OutputPdf");
+
+    public static string Letters_OutputWord => Get("Letters_OutputWord");
+
+    public static string Letters_PdfNeedsWord => Get("Letters_PdfNeedsWord");
+
+    public static string Letters_PdfOrWordFilter => Get("Letters_PdfOrWordFilter");
 
     public static string Letters_PickFolder => Get("Letters_PickFolder");
 
@@ -1009,6 +1021,8 @@ public static class Strings
 
     public static string Letters_Reprint => Get("Letters_Reprint");
 
+    public static string Letters_SaveAs => Get("Letters_SaveAs");
+
     public static string Letters_Selected => Get("Letters_Selected");
 
     public static string Letters_Template => Get("Letters_Template");
@@ -1019,15 +1033,27 @@ public static class Strings
 
     public static string Letters_Who => Get("Letters_Who");
 
+    public static string Letters_WordFilter => Get("Letters_WordFilter");
+
+    public static string Letters_WordOnePerPerson => Get("Letters_WordOnePerPerson");
+
     public static string LetterTemplates_Active => Get("LetterTemplates_Active");
 
     public static string LetterTemplates_AddStandard => Get("LetterTemplates_AddStandard");
 
+    public static string LetterTemplates_AddWord => Get("LetterTemplates_AddWord");
+
     public static string LetterTemplates_Body => Get("LetterTemplates_Body");
+
+    public static string LetterTemplates_Copied => Get("LetterTemplates_Copied");
 
     public static string LetterTemplates_DeleteMessage => Get("LetterTemplates_DeleteMessage");
 
     public static string LetterTemplates_DeleteTitle => Get("LetterTemplates_DeleteTitle");
+
+    public static string LetterTemplates_EditInWord => Get("LetterTemplates_EditInWord");
+
+    public static string LetterTemplates_EditInWordHint => Get("LetterTemplates_EditInWordHint");
 
     public static string LetterTemplates_Fields => Get("LetterTemplates_Fields");
 
@@ -1043,15 +1069,41 @@ public static class Strings
 
     public static string LetterTemplates_NewBody => Get("LetterTemplates_NewBody");
 
+    public static string LetterTemplates_OpenSample => Get("LetterTemplates_OpenSample");
+
     public static string LetterTemplates_Prefix => Get("LetterTemplates_Prefix");
 
     public static string LetterTemplates_Preview => Get("LetterTemplates_Preview");
+
+    public static string LetterTemplates_RemoveWord => Get("LetterTemplates_RemoveWord");
+
+    public static string LetterTemplates_RemoveWordConfirm => Get("LetterTemplates_RemoveWordConfirm");
+
+    public static string LetterTemplates_RemoveWordMessage => Get("LetterTemplates_RemoveWordMessage");
+
+    public static string LetterTemplates_RemoveWordTitle => Get("LetterTemplates_RemoveWordTitle");
+
+    public static string LetterTemplates_ReplaceWord => Get("LetterTemplates_ReplaceWord");
 
     public static string LetterTemplates_SampleEmployee => Get("LetterTemplates_SampleEmployee");
 
     public static string LetterTemplates_StandardAdded => Get("LetterTemplates_StandardAdded");
 
     public static string LetterTemplates_Subject => Get("LetterTemplates_Subject");
+
+    public static string LetterTemplates_UseSavedChanges => Get("LetterTemplates_UseSavedChanges");
+
+    public static string LetterTemplates_WordAdded => Get("LetterTemplates_WordAdded");
+
+    public static string LetterTemplates_WordFieldsHint => Get("LetterTemplates_WordFieldsHint");
+
+    public static string LetterTemplates_WordFile => Get("LetterTemplates_WordFile");
+
+    public static string LetterTemplates_WordHint => Get("LetterTemplates_WordHint");
+
+    public static string LetterTemplates_WordMarker => Get("LetterTemplates_WordMarker");
+
+    public static string LetterTemplates_WordUpdated => Get("LetterTemplates_WordUpdated");
 
     public static string LoanDetail_Approve => Get("LoanDetail_Approve");
 

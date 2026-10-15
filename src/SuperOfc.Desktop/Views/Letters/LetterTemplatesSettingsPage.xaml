@@ -10,6 +10,7 @@
       <TextBlock Style="{StaticResource SectionTitle}" Text="{Binding Title}" />
       <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}">
         <ui:Button Margin="0,0,8,0" Command="{Binding AddStandardCommand}" Content="{x:Static res:Strings.LetterTemplates_AddStandard}" Icon="{ui:SymbolIcon DocumentCopy20}" />
+        <ui:Button Margin="0,0,8,0" Command="{Binding AddWordCommand}" Content="{x:Static res:Strings.LetterTemplates_AddWord}" Icon="{ui:SymbolIcon DocumentArrowUp20}" />
         <ui:Button Appearance="Primary" Command="{Binding NewCommand}" Content="{x:Static res:Strings.LetterTemplates_New}" Icon="{ui:SymbolIcon Add20}" />
       </StackPanel>
     </Grid>
@@ -31,10 +32,18 @@
     <ListBox
         Width="210"
         Margin="0,0,16,0"
-        DisplayMemberPath="Name"
         DockPanel.Dock="Left"
         ItemsSource="{Binding Templates}"
-        SelectedItem="{Binding Selected}" />
+        SelectedItem="{Binding Selected}">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <StackPanel>
+            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Style="{StaticResource Caption}" Text="{x:Static res:Strings.LetterTemplates_WordMarker}" Visibility="{Binding IsWord, Converter={StaticResource BoolToVisibility}}" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
 
     <!-- Fields to insert -->
     <DockPanel Width="250" Margin="16,0,0,0" DockPanel.Dock="Right">
@@ -45,7 +54,20 @@
           Icon="{ui:SymbolIcon Search20}"
           PlaceholderText="{x:Static res:Strings.App_Search}"
           Text="{Binding FieldSearch, UpdateSourceTrigger=PropertyChanged}" />
-      <TextBlock Margin="0,0,0,6" DockPanel.Dock="Top" Style="{StaticResource Caption}" Text="{x:Static res:Strings.LetterTemplates_FieldsHint}" TextWrapping="Wrap" />
+      <TextBlock
+          Margin="0,0,0,6"
+          DockPanel.Dock="Top"
+          Style="{StaticResource Caption}"
+          Text="{x:Static res:Strings.LetterTemplates_FieldsHint}"
+          TextWrapping="Wrap"
+          Visibility="{Binding IsText, Converter={StaticResource BoolToVisibility}}" />
+      <TextBlock
+          Margin="0,0,0,6"
+          DockPanel.Dock="Top"
+          Style="{StaticResource Caption}"
+          Text="{x:Static res:Strings.LetterTemplates_WordFieldsHint}"
+          TextWrapping="Wrap"
+          Visibility="{Binding IsWord, Converter={StaticResource BoolToVisibility}}" />
       <ListBox x:Name="FieldList" ItemsSource="{Binding Fields}">
         <ListBox.ItemTemplate>
           <DataTemplate>
@@ -91,7 +113,30 @@
           <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LetterTemplates_Subject}" />
           <TextBox x:Name="SubjectBox" Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
         </StackPanel>
-        <StackPanel Style="{StaticResource Field}">
+        <StackPanel Style="{StaticResource Field}" Visibility="{Binding IsWord, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LetterTemplates_Body}" />
+          <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="{Binding WordFileText}" TextWrapping="Wrap" />
+          <TextBlock Margin="0,0,0,8" Style="{StaticResource Caption}" Text="{x:Static res:Strings.LetterTemplates_WordHint}" TextWrapping="Wrap" />
+          <WrapPanel Visibility="{Binding CanManage, Converter={StaticResource BoolToVisibility}}">
+            <ui:Button Margin="0,0,8,8" Command="{Binding EditInWordCommand}" Content="{x:Static res:Strings.LetterTemplates_EditInWord}" Icon="{ui:SymbolIcon DocumentEdit20}" />
+            <ui:Button
+                Margin="0,0,8,8"
+                Appearance="Primary"
+                Command="{Binding UseSavedChangesCommand}"
+                Content="{x:Static res:Strings.LetterTemplates_UseSavedChanges}"
+                Icon="{ui:SymbolIcon ArrowSync20}"
+                Visibility="{Binding HasEditedFile, Converter={StaticResource BoolToVisibility}}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding ReplaceWordCommand}" Content="{x:Static res:Strings.LetterTemplates_ReplaceWord}" Icon="{ui:SymbolIcon DocumentArrowUp20}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding RemoveWordCommand}" Content="{x:Static res:Strings.LetterTemplates_RemoveWord}" Icon="{ui:SymbolIcon DocumentDismiss20}" />
+            <ui:Button Margin="0,0,8,8" Command="{Binding OpenSampleCommand}" Content="{x:Static res:Strings.LetterTemplates_OpenSample}" Icon="{ui:SymbolIcon Open20}" />
+          </WrapPanel>
+          <TextBlock
+              Style="{StaticResource Caption}"
+              Text="{x:Static res:Strings.LetterTemplates_EditInWordHint}"
+              TextWrapping="Wrap"
+              Visibility="{Binding HasEditedFile, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+        <StackPanel Style="{StaticResource Field}" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibility}}">
           <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.LetterTemplates_Body}" />
           <TextBox
               x:Name="BodyBox"

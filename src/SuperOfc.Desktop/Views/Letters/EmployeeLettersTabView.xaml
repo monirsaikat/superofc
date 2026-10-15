@@ -26,6 +26,18 @@
           <DataGridTextColumn Width="130" Binding="{Binding Number}" Header="{x:Static res:Strings.Letters_Number}" />
           <DataGridTextColumn Width="110" Binding="{Binding IssuedOn, StringFormat=dd MMM yyyy}" Header="{x:Static res:Strings.Letters_Date}" />
           <DataGridTextColumn Width="*" Binding="{Binding TemplateName}" Header="{x:Static res:Strings.Letters_Template}" />
+          <DataGridTemplateColumn Width="60">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{StaticResource Caption}"
+                    Text="{x:Static res:Strings.LetterTemplates_WordMarker}"
+                    ToolTip="{x:Static res:Strings.Letters_OutputWord}"
+                    Visibility="{Binding HasDocument, Converter={StaticResource BoolToVisibility}}" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
           <DataGridTextColumn Width="120" Binding="{Binding IssuedBy}" Header="{x:Static res:Strings.Letters_IssuedBy}" />
           <DataGridTemplateColumn Width="100">
             <DataGridTemplateColumn.CellTemplate>
