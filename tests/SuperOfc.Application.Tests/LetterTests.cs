@@ -122,6 +122,34 @@ public class LetterTests
     }
 
     [Fact]
+    public async Task A_failed_file_per_employee_issue_deletes_the_files_it_wrote_and_numbers_nothing()
+    {
+        var (host, rina, kamal) = await SetUpAsync();
+        await using var _ = host;
+        var certificate = await TemplateAsync(host, "Salary certificate");
+        var inputs = new Dictionary<string, string?> { ["Purpose"] = "a bank loan" };
+        var folder = Path.Combine(host.Root, "each");
+        Directory.CreateDirectory(folder);
+        var rinaFile = Path.Combine(folder, "Salary certificate E1 Rina Das.pdf");
+        var kamalFile = Path.Combine(folder, "Salary certificate E2 Kamal Roy.pdf");
+
+        // Kamal's PDF is open in a viewer, so his file cannot be written after Rina's was.
+        await using (var open = new FileStream(kamalFile, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+        {
+            var failed = await host.SendFailAsync(new IssueLettersCommand(certificate, [rina, kamal], Today, inputs, folder, OneFilePerEmployee: true));
+            failed.Code.Should().Be("Validation.Path");
+            File.Exists(rinaFile).Should().BeFalse("a letter written before the failure would carry a number that is handed out again");
+        }
+
+        File.Exists(kamalFile).Should().BeTrue("a file the issue did not write is left alone");
+        (await host.WithDbAsync(db => db.IssuedLetters.CountAsync())).Should().Be(0);
+
+        var issued = await host.SendOkAsync(new IssueLettersCommand(certificate, [rina, kamal], Today, inputs, folder, OneFilePerEmployee: true));
+        issued.Numbers.Should().Equal("HR/2026/0001", "HR/2026/0002");
+        issued.Files.Should().Equal(rinaFile, kamalFile);
+    }
+
+    [Fact]
     public async Task Experience_and_increment_letters_use_exit_dates_and_salary_history()
     {
         var (host, rina, _) = await SetUpAsync();
