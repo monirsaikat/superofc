@@ -5,6 +5,9 @@ Format follows Keep a Changelog; versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Settings in the side menu can be opened again after leaving it (it stayed highlighted and did not respond).
+
 ### Added
 - Keep me signed in on this PC: SuperOfc opens without asking for the password again until you sign out. On by default; the idle lock still applies.
 - The standard salary certificate, experience certificate, NOC letter and certificate of employment are now the company's own Word letters, so issued letters look exactly like the Word files. Copies already installed switch over automatically when their built-in certificates were never edited.

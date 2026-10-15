@@ -120,6 +120,38 @@ public class LoginAndShellTests
     }
 
     [Fact]
+    public async Task Settings_can_be_opened_again_after_leaving_it()
+    {
+        await using var host = await DesktopTestHost.CreateAsync(completeSetup: true);
+        var shell = await SignInAsync(host, "admin", DesktopTestHost.Password);
+        var navigation = host.Get<IAppNavigator>();
+        var settings = shell.FooterItems.Single();
+        var dashboard = shell.Items.First(i => i.ViewModelType == typeof(DashboardViewModel));
+
+        shell.SelectedFooterItem = settings;
+        await WaitForAsync(() => navigation.Current is SettingsViewModel);
+        shell.SelectedMainItem.Should().BeNull("the main list shows nothing selected while Settings is open");
+
+        shell.SelectedMainItem = dashboard;
+        await WaitForAsync(() => navigation.Current is DashboardViewModel);
+        shell.SelectedFooterItem.Should().BeNull("Settings must not stay highlighted, or clicking it again does nothing");
+
+        shell.SelectedFooterItem = settings;
+        await WaitForAsync(() => navigation.Current is SettingsViewModel);
+        shell.SelectedFooterItem.Should().BeSameAs(settings);
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < 100 && !condition(); i++)
+        {
+            await Task.Delay(20);
+        }
+
+        condition().Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Viewer_sees_only_permitted_areas()
     {
         await using var host = await DesktopTestHost.CreateAsync(completeSetup: true);

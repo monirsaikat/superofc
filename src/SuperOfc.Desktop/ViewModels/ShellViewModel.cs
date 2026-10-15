@@ -42,6 +42,35 @@ public sealed partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     public partial NavItem? SelectedItem { get; set; }
 
+    /// <summary>
+    /// The selection shown in the main list: empty while a footer page (Settings) is open. Each list needs its own, or the
+    /// list that does not contain the current page keeps its old highlight and that item cannot be clicked again.
+    /// </summary>
+    public NavItem? SelectedMainItem
+    {
+        get => SelectedItem is { } item && Items.Contains(item) ? item : null;
+        set
+        {
+            if (value is not null)
+            {
+                SelectedItem = value;
+            }
+        }
+    }
+
+    /// <summary>The selection shown in the footer list (Settings); empty while any other page is open.</summary>
+    public NavItem? SelectedFooterItem
+    {
+        get => SelectedItem is { } item && FooterItems.Contains(item) ? item : null;
+        set
+        {
+            if (value is not null)
+            {
+                SelectedItem = value;
+            }
+        }
+    }
+
     [ObservableProperty]
     public partial object? CurrentPage { get; set; }
 
@@ -72,6 +101,12 @@ public sealed partial class ShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(Initials));
         _navigation.Reset();
         await _navigation.NavigateToAsync(typeof(DashboardViewModel), clearHistory: true).ConfigureAwait(true);
+    }
+
+    partial void OnSelectedItemChanged(NavItem? value)
+    {
+        OnPropertyChanged(nameof(SelectedMainItem));
+        OnPropertyChanged(nameof(SelectedFooterItem));
     }
 
     async partial void OnSelectedItemChanged(NavItem? oldValue, NavItem? newValue)
