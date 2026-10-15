@@ -15,6 +15,8 @@ internal sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(c => c.CurrencySymbol).HasMaxLength(5);
         builder.Property(c => c.TimeZoneId).HasMaxLength(100);
         builder.Property(c => c.DateFormat).HasMaxLength(40);
+        builder.Property(c => c.SignatoryName).HasMaxLength(150);
+        builder.Property(c => c.SignatoryTitle).HasMaxLength(100);
         builder.ComplexProperty(c => c.WorkingWeek);
     }
 }

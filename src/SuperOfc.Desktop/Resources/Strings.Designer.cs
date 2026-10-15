@@ -1833,6 +1833,12 @@ public static class Strings
 
     public static string Settings_Shifts => Get("Settings_Shifts");
 
+    public static string Settings_SignatoryHint => Get("Settings_SignatoryHint");
+
+    public static string Settings_SignatoryName => Get("Settings_SignatoryName");
+
+    public static string Settings_SignatoryTitle => Get("Settings_SignatoryTitle");
+
     public static string Settings_TaxId => Get("Settings_TaxId");
 
     public static string Settings_Theme => Get("Settings_Theme");

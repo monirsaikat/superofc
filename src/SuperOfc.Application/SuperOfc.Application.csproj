@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Standard Word letters (ADR-24): the converted company letters in doc-files/templates. -->
+    <EmbeddedResource Include="..\..\doc-files\templates\*.docx" LogicalName="Letters.Standard.%(Filename)%(Extension)" Link="Letters\Standard\%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

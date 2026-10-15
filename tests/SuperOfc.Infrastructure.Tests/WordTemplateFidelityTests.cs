@@ -16,7 +16,11 @@ public class WordTemplateFidelityTests
         + "Troubleshooting and resolving issues to ensure optimal performance.\n"
         + "Delivering exceptional user experiences for websites and web applications.";
 
-    /// <summary>Template, original and, per "Key|format", the text the original letter has at that field.</summary>
+    /// <summary>
+    /// Template, original and, per "Key|format", the text the original letter has at that field. The company name and the
+    /// signatory are fields too, given exactly as each original letter types them (the NOC letter's trailing space after the
+    /// signatory's name stays in the template, outside the field).
+    /// </summary>
     private static readonly (string Name, string Template, string Original, Dictionary<string, string> Values)[] Pairs =
     [
         ("noc", "NOC letter.docx", "NOC Letter For Job Change.docx", new()
@@ -33,6 +37,9 @@ public class WordTemplateFidelityTests
             ["Employee.HeShe|"] = "he",
             ["Employee.HisHer|"] = "his",
             ["Employee.HimHer|"] = "him",
+            ["Company.Name|"] = "THESOFTKING Limited",
+            ["Company.SignatoryName|"] = "MD Hasibur Rahman Hasan",
+            ["Company.SignatoryTitle|"] = "Head Of Operations",
         }),
         ("employment", "Certificate of employment.docx", "TSK Certificate of Employment.docx", new()
         {
@@ -47,6 +54,10 @@ public class WordTemplateFidelityTests
             ["Employee.Responsibilities|"] = Responsibilities,
             ["Salary.Gross|words"] = "Thirty-Seven Thousand",
             ["Salary.Gross|n0"] = "37,000",
+            ["Company.Name|"] = "THESOFTKING Limited",
+            ["Company.Name|upper"] = "THESOFTKING LIMITED",
+            ["Company.SignatoryName|"] = "MD Hasibur Rahman Hasan",
+            ["Company.SignatoryTitle|"] = "Head Of Operations",
         }),
         ("experience", "Experience certificate.docx", "TSK EXPERIANCE CERTIFICATE.docx", new()
         {
@@ -63,6 +74,9 @@ public class WordTemplateFidelityTests
             ["Employee.ExitDate|%d"] = "20",
             ["Employee.ExitDate|ord"] = "th",
             ["Employee.ExitDate|MMMM yyyy"] = "August 2026",
+            ["Company.Name|"] = "TheSoftKing Limited",
+            ["Company.SignatoryName|"] = "Md. Hasibur Rahman Hasan",
+            ["Company.SignatoryTitle|"] = "Head Of Operations",
         }),
         ("salary", "Salary certificate.docx", "TSK salary certificate.docx", new()
         {
@@ -81,6 +95,9 @@ public class WordTemplateFidelityTests
             ["Salary.HRA|n0"] = "14,000",
             ["Salary.MEDICAL|n0"] = "7,000",
             ["Salary.OTHER|n0"] = "7,000",
+            ["Company.Name|"] = "THESOFTKING Limited",
+            ["Company.SignatoryName|"] = "MD Hasibur Rahman Hasan",
+            ["Company.SignatoryTitle|"] = "Head of Operations",
         }),
     ];
 

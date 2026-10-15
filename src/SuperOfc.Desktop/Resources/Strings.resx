@@ -899,6 +899,9 @@ For {Company.Name}</value></data>
   <data name="Settings_SalaryComponents" xml:space="preserve"><value>Salary components</value></data>
   <data name="Settings_SalaryStructures" xml:space="preserve"><value>Salary structures</value></data>
   <data name="Settings_Shifts" xml:space="preserve"><value>Shifts</value></data>
+  <data name="Settings_SignatoryHint" xml:space="preserve"><value>Printed at the end of HR letters, for example "MD Hasibur Rahman Hasan" and "Head of Operations".</value></data>
+  <data name="Settings_SignatoryName" xml:space="preserve"><value>Letters are signed by</value></data>
+  <data name="Settings_SignatoryTitle" xml:space="preserve"><value>Signatory's title</value></data>
   <data name="Settings_TaxId" xml:space="preserve"><value>Tax identifier</value></data>
   <data name="Settings_Theme" xml:space="preserve"><value>Theme</value></data>
   <data name="Settings_ThemeDark" xml:space="preserve"><value>Dark</value></data>

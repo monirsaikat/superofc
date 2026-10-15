@@ -38,3 +38,8 @@ Letters_PdfNeedsWord=PDF needs Microsoft Word on this PC. Letters are saved as W
 Letters_OnePerEmployeeFile=Save a separate file for each person
 Letters_WordOnePerPerson=Word letters are saved one file per person
 Letters_IssueWord=Issue and save
+
+# Letters: signatory in company settings
+Settings_SignatoryName=Letters are signed by
+Settings_SignatoryTitle=Signatory's title
+Settings_SignatoryHint=Printed at the end of HR letters, for example "MD Hasibur Rahman Hasan" and "Head of Operations".

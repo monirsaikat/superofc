@@ -6,6 +6,9 @@ Format follows Keep a Changelog; versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- The standard salary certificate, experience certificate, NOC letter and certificate of employment are now the company's own Word letters, so issued letters look exactly like the Word files. Copies already installed switch over automatically when their built-in certificates were never edited.
+- Settings › Company: who signs letters and their title, printed at the end of the standard letters.
+- Salary components the employee's salary does not include print as 0 in letters; a zero "Other allowance" (OTHER) component is added for the salary certificate.
 - Word letter templates: upload your company's own Word letters as templates. SuperOfc fills in each person's details and keeps everything else exactly as in the Word file (fonts, bold, superscript dates, tables, bullets, letterhead space), then saves a PDF made by Word or a Word file. Ready-made templates for the NOC, certificate of employment, experience certificate and salary certificate are included in doc-files/templates.
 - Letter fields take formats: dates such as "1st June 2023" or "June 1, 2023", amounts as "70,000" or "Seventy Thousand".
 - Father's name on the employee profile and in employee import and export; responsibilities in the designation description print as bullets in letters.

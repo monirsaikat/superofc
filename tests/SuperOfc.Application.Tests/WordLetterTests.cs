@@ -51,9 +51,13 @@ public class WordLetterTests
     private static Task<Guid> AddOtherComponentAsync(TestHost host)
         => host.SendOkAsync(new SaveSalaryComponentCommand(null, "OTHER", "Other allowance", ComponentKind.Earning, ComponentCalc.Fixed, 0, 0, null, false, true, false, 10, true));
 
-    /// <summary>Karim (male, father Abdul Karim, left on 9 March 2026) and Rina (female, no father's name); both Accounts Officers.</summary>
+    /// <summary>
+    /// Karim (male, father Abdul Karim, left on 9 March 2026) and Rina (female, no father's name); both Accounts Officers.
+    /// Also sets the company's signatory, which the converted letters print.
+    /// </summary>
     private static async Task<(Guid Karim, Guid Rina)> EmployeesAsync(TestHost host)
     {
+        await LetterTestData.SetSignatoryAsync(host);
         var officer = await host.SendOkAsync(new SaveMasterDataCommand(MasterDataKind.Designation, null, "Accounts Officer", "AO", "Prepare accounts\nCheck vouchers", 0));
         var karim = await host.SendOkAsync(new CreateEmployeeCommand(EmployeeTestData.Input("E1", "Karim Uddin", new DateOnly(2023, 6, 1)) with
         {
@@ -77,12 +81,18 @@ public class WordLetterTests
         var (host, _) = await CreateHostAsync();
         await using var _ = host;
 
+        // Setup adds the OTHER component the salary certificate prints; without it the file is refused.
+        var other = (await PayrollTestData.ComponentsAsync(host))["OTHER"].Id;
+        await host.SendOkAsync(new DeleteSalaryComponentCommand(other));
         var salary = Sample(host, "Salary certificate.docx");
         var unknown = await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, salary));
         unknown.Code.Should().Be("Validation.SourceFilePath");
         unknown.Message.Should().Contain("{Salary.OTHER}").And.NotContain("Salary.BASIC");
 
         await AddOtherComponentAsync(host);
+
+        // The standard NOC letter is deleted, so its upload takes the file's name as is; the other names are taken.
+        await host.SendOkAsync(new DeleteLetterTemplateCommand((await host.SendOkAsync(new GetLetterTemplatesQuery())).Single(t => t.Name == "NOC letter").Id));
         var ids = new Dictionary<string, Guid>();
         foreach (var file in TemplateFiles)
         {
@@ -102,7 +112,8 @@ public class WordLetterTests
         experience.Kind.Should().Be(LetterKind.ExperienceCertificate);
         templates.Single(t => t.Id == ids["Salary certificate.docx"]).Should().Match<LetterTemplateDto>(t => t.Name == "Salary certificate (2)"
             && t.Kind == LetterKind.SalaryCertificate && t.UsesSalary);
-        templates.Single(t => t.Id == ids["Certificate of employment.docx"]).Inputs.Should().BeEmpty();
+        templates.Single(t => t.Id == ids["Certificate of employment.docx"]).Should().Match<LetterTemplateDto>(t => t.Name == "Certificate of employment (2)"
+            && t.Inputs.Count == 0);
         templates.Where(t => t.Name == "Appointment letter").Should().OnlyContain(t => !t.IsWord && t.DocumentFileName == null);
 
         var stored = await host.WithDbAsync(db => db.LetterTemplates.SingleAsync(t => t.Id == ids["NOC letter.docx"]));
@@ -120,6 +131,7 @@ public class WordLetterTests
         await using var _ = host;
         var folder = Path.Combine(host.Root, "upload");
         Directory.CreateDirectory(folder);
+        var before = (await host.SendOkAsync(new GetLetterTemplatesQuery())).Select(t => t.Id).ToList();
 
         var docm = Path.Combine(folder, "macro.docm");
         File.Copy(Sample(host, "NOC letter.docx"), docm);
@@ -138,7 +150,9 @@ public class WordLetterTests
         (await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, fake))).Code.Should().Be("Validation.SourceFilePath");
 
         (await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, Path.Combine(folder, "missing.docx")))).Code.Should().Be("Validation.SourceFilePath");
-        (await host.SendOkAsync(new GetLetterTemplatesQuery())).Should().OnlyContain(t => !t.IsWord);
+        (await host.SendOkAsync(new GetLetterTemplatesQuery())).Select(t => t.Id).Should().BeEquivalentTo(before, "no template was added");
+        (await host.SendOkAsync(new GetLetterTemplatesQuery())).Where(t => t.IsWord).Select(t => t.DocumentFileName)
+            .Should().BeEquivalentTo(LetterDefaults.WordLetters.Select(w => w.FileName), "only the standard Word letters are Word templates");
 
         await host.SignInAsAsync(Role.Viewer);
         (await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, Sample(host, "NOC letter.docx")))).Code.Should().Be("Auth.Forbidden");
@@ -173,11 +187,12 @@ public class WordLetterTests
     {
         var (host, _) = await CreateHostAsync();
         await using var _ = host;
+        var before = (await host.SendOkAsync(new GetLetterTemplatesQuery())).Select(t => t.Id).ToList();
 
         var tooLong = await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, LongSample(host, "Long letter.docx", 20_000)));
         tooLong.Code.Should().Be("Validation.SourceFilePath");
         tooLong.Message.Should().Be("This Word file has too much text for a letter (over 20,000 characters).");
-        (await host.SendOkAsync(new GetLetterTemplatesQuery())).Should().OnlyContain(t => !t.IsWord, "nothing is saved, not even a cut copy");
+        (await host.SendOkAsync(new GetLetterTemplatesQuery())).Select(t => t.Id).Should().BeEquivalentTo(before, "nothing is saved, not even a cut copy");
 
         var id = await host.SendOkAsync(new ImportLetterTemplateDocumentCommand(null, LongSample(host, "Fits letter.docx", 15_000)));
         var template = (await host.SendOkAsync(new GetLetterTemplatesQuery())).Single(t => t.Id == id);
@@ -247,13 +262,14 @@ public class WordLetterTests
         (await host.SendOkAsync(new GetLetterOutputOptionsQuery())).WordInstalled.Should().BeTrue();
     }
 
+    /// <summary>The standard NOC letter (the same file as doc-files/templates/NOC letter.docx).</summary>
     [Fact]
     public async Task Pdf_output_makes_one_file_per_employee_through_word()
     {
         var (host, word) = await CreateHostAsync();
         await using var _ = host;
         var (karim, rina) = await EmployeesAsync(host);
-        var template = await host.SendOkAsync(new ImportLetterTemplateDocumentCommand(null, Sample(host, "NOC letter.docx")));
+        var template = (await host.SendOkAsync(new GetLetterTemplatesQuery())).Single(t => t.Name == "NOC letter").Id;
 
         var folder = Path.Combine(host.Root, "noc");
         var issued = await host.SendOkAsync(new IssueLettersCommand(template, [karim, rina], Today, null, folder));
@@ -343,7 +359,6 @@ public class WordLetterTests
     {
         var (host, _) = await CreateHostAsync();
         await using var _ = host;
-        await AddOtherComponentAsync(host);
         var (karim, _) = await EmployeesAsync(host);
         var components = await PayrollTestData.ComponentsAsync(host);
         await host.SendOkAsync(new SaveSalaryAssignmentCommand(null, karim, new DateOnly(2025, 1, 1), null, null,

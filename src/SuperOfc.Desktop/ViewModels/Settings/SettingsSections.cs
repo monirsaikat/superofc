@@ -49,6 +49,12 @@ public sealed partial class CompanySettingsViewModel(PageServices services) : Ed
     public partial string? TaxIdentifier { get; set; }
 
     [ObservableProperty]
+    public partial string? SignatoryName { get; set; }
+
+    [ObservableProperty]
+    public partial string? SignatoryTitle { get; set; }
+
+    [ObservableProperty]
     public partial string CurrencyCode { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -84,6 +90,8 @@ public sealed partial class CompanySettingsViewModel(PageServices services) : Ed
             Phone = c.Phone;
             Email = c.Email;
             TaxIdentifier = c.TaxIdentifier;
+            SignatoryName = c.SignatoryName;
+            SignatoryTitle = c.SignatoryTitle;
             CurrencyCode = c.CurrencyCode;
             CurrencySymbol = c.CurrencySymbol;
             Grouping = c.Grouping;
@@ -104,7 +112,7 @@ public sealed partial class CompanySettingsViewModel(PageServices services) : Ed
         var result = await SendAsync(
             new UpdateCompanyCommand(
                 Name, Address, Phone, Email, TaxIdentifier, _logoPath, CurrencyCode, CurrencySymbol, Grouping,
-                TimeZoneId, FiscalYearStartMonth, DateFormat, Week?.ToWeek() ?? WorkingWeek.Default),
+                TimeZoneId, FiscalYearStartMonth, DateFormat, Week?.ToWeek() ?? WorkingWeek.Default, SignatoryName, SignatoryTitle),
             showErrors: false).ConfigureAwait(true);
         if (result.IsFailure)
         {
