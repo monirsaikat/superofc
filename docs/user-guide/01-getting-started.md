@@ -10,6 +10,7 @@ The first time SuperOfc opens, a short wizard asks for:
 
 ## Signing in and locking
 Sign in with your user name and password. After several wrong passwords the account is locked for a few minutes.
+"Keep me signed in on this PC" is ticked by default: next time SuperOfc opens straight away, without the password, until you sign out (or 30 days without opening it). Untick it on a shared PC. Changing or resetting the password, or deactivating the user, signs them out on every PC.
 Press Ctrl+L, or leave the PC idle, and the screen locks. Your password opens it again where you left off.
 
 ## Users and roles

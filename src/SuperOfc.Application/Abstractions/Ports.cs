@@ -134,6 +134,19 @@ public interface IFileStorage
     void Delete(string relativePath);
 }
 
+/// <summary>
+/// Keeps the "stay signed in" token on this PC for the current Windows user (DPAPI user scope). Holds at most one token.
+/// </summary>
+public interface ISignInTokenStore
+{
+    /// <summary>The saved token, or null when there is none or it cannot be read.</summary>
+    string? Load();
+
+    void Save(string token);
+
+    void Clear();
+}
+
 /// <summary>Protects secrets at rest (DPAPI on Windows).</summary>
 public interface ISecretProtector
 {

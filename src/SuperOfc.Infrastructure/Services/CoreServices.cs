@@ -248,6 +248,59 @@ public sealed class DpapiSecretProtector : ISecretProtector
     }
 }
 
+/// <summary>
+/// Keeps the "stay signed in" token in <c>&lt;data root&gt;\signin\&lt;Windows user SID&gt;.dat</c>, encrypted with DPAPI in
+/// user scope: only the same Windows user on the same PC can read it, even though the data folder is shared.
+/// </summary>
+public sealed class DpapiSignInTokenStore(AppEnvironment environment) : ISignInTokenStore
+{
+    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("SuperOfc.SignIn.v1");
+
+    private string FilePath
+    {
+        get
+        {
+            var user = System.Security.Principal.WindowsIdentity.GetCurrent().User?.Value ?? Environment.UserName;
+            return Path.Combine(environment.Root, "signin", user + ".dat");
+        }
+    }
+
+    public string? Load()
+    {
+        try
+        {
+            var path = FilePath;
+            return File.Exists(path)
+                ? Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(path), Entropy, DataProtectionScope.CurrentUser))
+                : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException)
+        {
+            return null;
+        }
+    }
+
+    public void Save(string token)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(token);
+        var path = FilePath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllBytes(path, ProtectedData.Protect(Encoding.UTF8.GetBytes(token), Entropy, DataProtectionScope.CurrentUser));
+    }
+
+    public void Clear()
+    {
+        try
+        {
+            File.Delete(FilePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The token is also removed from the database, so a leftover file no longer signs anyone in.
+        }
+    }
+}
+
 /// <summary>Stores files under the data folder with path-traversal protection.</summary>
 public sealed class LocalFileStorage(IAppEnvironment environment) : IFileStorage
 {

@@ -616,6 +616,8 @@ For {Company.Name}</value></data>
   <data name="Lock_SignOutInstead" xml:space="preserve"><value>Sign out instead</value></data>
   <data name="Lock_Title" xml:space="preserve"><value>Locked</value></data>
   <data name="Lock_Unlock" xml:space="preserve"><value>Unlock</value></data>
+  <data name="Login_KeepSignedIn" xml:space="preserve"><value>Keep me signed in on this PC</value></data>
+  <data name="Login_KeepSignedInHint" xml:space="preserve"><value>Opens straight to SuperOfc next time, until you sign out. The screen still locks when idle.</value></data>
   <data name="Login_Password" xml:space="preserve"><value>Password</value></data>
   <data name="Login_SignIn" xml:space="preserve"><value>Sign in</value></data>
   <data name="Login_Subtitle" xml:space="preserve"><value>Sign in to {0}</value></data>

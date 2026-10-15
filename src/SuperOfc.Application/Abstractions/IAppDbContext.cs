@@ -13,6 +13,8 @@ public partial interface IAppDbContext
 
     DbSet<User> Users { get; }
 
+    DbSet<SignInToken> SignInTokens { get; }
+
     DbSet<AuditEntry> AuditEntries { get; }
 
     DbSet<Setting> Settings { get; }

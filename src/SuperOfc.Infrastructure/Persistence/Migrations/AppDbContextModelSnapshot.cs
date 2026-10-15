@@ -3072,6 +3072,54 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                     b.ToTable("Setting", (string)null);
                 });
 
+            modelBuilder.Entity("SuperOfc.Domain.Security.SignInToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastUsedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SignInToken", (string)null);
+                });
+
             modelBuilder.Entity("SuperOfc.Domain.Security.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3639,6 +3687,15 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                     b.HasOne("SuperOfc.Domain.Payroll.SalaryStructure", null)
                         .WithMany("Lines")
                         .HasForeignKey("StructureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SuperOfc.Domain.Security.SignInToken", b =>
+                {
+                    b.HasOne("SuperOfc.Domain.Security.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

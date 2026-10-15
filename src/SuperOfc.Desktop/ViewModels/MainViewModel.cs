@@ -25,6 +25,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private readonly ICompanyContext _company;
     private readonly IPolicyProvider _policies;
     private readonly IClock _clock;
+    private readonly ISignInTokenStore _signInTokens;
     private readonly ILogger<MainViewModel> _logger;
     private readonly DispatcherTimer _idleTimer;
     private DateTime _lastActivityUtc = DateTime.UtcNow;
@@ -39,6 +40,7 @@ public sealed partial class MainViewModel : ViewModelBase
         INotificationService notifications,
         IBusyService busy,
         AppReadySignal ready,
+        ISignInTokenStore signInTokens,
         ILogger<MainViewModel> logger)
     {
         _services = services;
@@ -47,6 +49,7 @@ public sealed partial class MainViewModel : ViewModelBase
         _company = company;
         _policies = policies;
         _clock = clock;
+        _signInTokens = signInTokens;
         _logger = logger;
         Ready = ready;
         InfoBars = notifications.InfoBars;
@@ -107,6 +110,18 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
 
+        if (_signInTokens.Load() is { } token)
+        {
+            var resumed = await _dispatcher.SendAsync(new ResumeSignInCommand(token)).ConfigureAwait(true);
+            if (resumed.IsSuccess)
+            {
+                await OnSignedInAsync().ConfigureAwait(true);
+                return;
+            }
+
+            _signInTokens.Clear();
+        }
+
         ShowLogin();
     }
 
@@ -118,8 +133,15 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>Called by the login and setup screens after a successful sign-in.</summary>
-    public async Task OnSignedInAsync()
+    /// <param name="rememberToken">The token to keep on this PC when the user chose to stay signed in.</param>
+    public async Task OnSignedInAsync(string? rememberToken = null)
     {
+        if (rememberToken is not null)
+        {
+            _signInTokens.Save(rememberToken);
+        }
+
+
         _lastActivityUtc = _clock.UtcNow;
         var shell = _services.GetRequiredService<ShellViewModel>();
         CurrentScreen = shell;
@@ -137,7 +159,8 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
 
-        await _dispatcher.SendAsync(new LogoutCommand()).ConfigureAwait(true);
+        await _dispatcher.SendAsync(new LogoutCommand(_signInTokens.Load())).ConfigureAwait(true);
+        _signInTokens.Clear();
         navigation.Reset();
         _idleTimer.Stop();
         Lock = null;
