@@ -499,7 +499,9 @@
   <data name="LetterTemplates_AddStandard" xml:space="preserve"><value>Add standard letters</value></data>
   <data name="LetterTemplates_AddWord" xml:space="preserve"><value>Add Word template</value></data>
   <data name="LetterTemplates_Body" xml:space="preserve"><value>Letter</value></data>
+  <data name="LetterTemplates_CloseInWord" xml:space="preserve"><value>Save and close the file in Word first.</value></data>
   <data name="LetterTemplates_Copied" xml:space="preserve"><value>Copied {0}</value></data>
+  <data name="LetterTemplates_CopyFailed" xml:space="preserve"><value>Could not copy {0}. Another program is using the clipboard; try again.</value></data>
   <data name="LetterTemplates_DeleteMessage" xml:space="preserve"><value>Letters already issued from this template are kept.</value></data>
   <data name="LetterTemplates_DeleteTitle" xml:space="preserve"><value>Delete {0}?</value></data>
   <data name="LetterTemplates_EditInWord" xml:space="preserve"><value>Edit in Word</value></data>
@@ -527,7 +529,12 @@ For {Company.Name}</value></data>
   <data name="LetterTemplates_ReplaceWord" xml:space="preserve"><value>Replace Word file</value></data>
   <data name="LetterTemplates_SampleEmployee" xml:space="preserve"><value>Employee shown in the preview</value></data>
   <data name="LetterTemplates_StandardAdded" xml:space="preserve"><value>{0} standard templates added</value></data>
+  <data name="LetterTemplates_StartAgain" xml:space="preserve"><value>Start again</value></data>
+  <data name="LetterTemplates_StartAgainMessage" xml:space="preserve"><value>The changes saved in Word will be lost. Cancel to keep them; you can still click Use saved changes.</value></data>
+  <data name="LetterTemplates_StartAgainTitle" xml:space="preserve"><value>Start again from the stored file?</value></data>
   <data name="LetterTemplates_Subject" xml:space="preserve"><value>Subject</value></data>
+  <data name="LetterTemplates_UnusedEditsMessage" xml:space="preserve"><value>The Word file of {0} was saved in Word, but those changes are not used yet. Use them now, or cancel to choose whether to start again from the stored file.</value></data>
+  <data name="LetterTemplates_UnusedEditsTitle" xml:space="preserve"><value>Use the changes saved in Word?</value></data>
   <data name="LetterTemplates_UseSavedChanges" xml:space="preserve"><value>Use saved changes</value></data>
   <data name="LetterTemplates_WordAdded" xml:space="preserve"><value>Word template added</value></data>
   <data name="LetterTemplates_WordFieldsHint" xml:space="preserve"><value>Double-click a field to copy it, then paste it into the Word file or the subject.</value></data>
