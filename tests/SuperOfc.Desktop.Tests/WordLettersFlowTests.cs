@@ -6,6 +6,7 @@ using SuperOfc.Application.Common;
 using SuperOfc.Application.Employees;
 using SuperOfc.Application.Letters;
 using SuperOfc.Application.Organization;
+using SuperOfc.Application.Setup;
 using SuperOfc.Desktop.Resources;
 using SuperOfc.Desktop.Services;
 using SuperOfc.Desktop.Tests.Support;
@@ -66,10 +67,20 @@ public class WordLettersFlowTests
         return target;
     }
 
-    /// <summary>Two Accounts Officers with a father's name who left on 9 March 2025, so the experience certificate has no blanks.</summary>
+    /// <summary>
+    /// Two Accounts Officers with a father's name who left on 9 March 2025, and the company's signatory, so the experience
+    /// certificate has no blanks.
+    /// </summary>
     private static async Task<(Guid Karim, Guid Rafi)> EmployeesAsync(DesktopTestHost host)
     {
         var dispatcher = host.Get<IDispatcher>();
+        var company = await dispatcher.SendAsync(new GetCompanyQuery());
+        company.IsSuccess.Should().BeTrue(company.ToString());
+        var c = company.Value;
+        var signatory = await dispatcher.SendAsync(new UpdateCompanyCommand(c.Name, c.Address, c.Phone, c.Email, c.TaxIdentifier, c.LogoPath,
+            c.CurrencyCode, c.CurrencySymbol, c.Grouping, c.TimeZoneId, c.FiscalYearStartMonth, c.DateFormat, c.WorkingWeek,
+            "Md. Hasibur Rahman", "Head of Operations"));
+        signatory.IsSuccess.Should().BeTrue(signatory.ToString());
         var officer = await dispatcher.SendAsync(new SaveMasterDataCommand(MasterDataKind.Designation, null, "Accounts Officer", "AO", "Prepare accounts", 0));
         officer.IsSuccess.Should().BeTrue(officer.ToString());
 
@@ -122,7 +133,7 @@ public class WordLettersFlowTests
         await host.SignInAsync();
         var (karim, _) = await EmployeesAsync(host);
         var page = await SettingsPageAsync(host);
-        page.IsWord.Should().BeFalse("the standard letters are text templates");
+        page.IsWord.Should().BeFalse("the first standard letter (appointment) is a text template");
 
         host.Files.OpenFile(default!, default).ReturnsForAnyArgs(Sample(host, "Experience certificate.docx"));
         await page.AddWordCommand.ExecuteAsync(null);
@@ -424,6 +435,7 @@ public class WordLettersFlowTests
         await using var host = await CreateHostAsync(wordInstalled: true);
         await host.SignInAsync();
         var page = await WordTemplatePageAsync(host);
+        var uploaded = page.Selected!.Id;
         await page.EditInWordCommand.ExecuteAsync(null);
         var edited = page.EditedPath!;
 
@@ -435,7 +447,7 @@ public class WordLettersFlowTests
         var noc = File.ReadAllBytes(Sample(host, "NOC letter.docx"));
         File.WriteAllBytes(edited, noc);
         page.Selected = page.Templates.First(t => !t.IsWord);
-        page.Selected = page.Templates.Single(t => t.IsWord);
+        page.Selected = page.Templates.Single(t => t.Id == uploaded);
         page.HasEditedFile.Should().BeFalse();
 
         // Cancel both questions: the file keeps the edits and can still be used.

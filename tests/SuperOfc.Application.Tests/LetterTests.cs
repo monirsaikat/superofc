@@ -76,7 +76,7 @@ public class LetterTests
     {
         var (host, rina, kamal) = await SetUpAsync();
         await using var _ = host;
-        var certificate = await TemplateAsync(host, "Salary certificate");
+        var certificate = await LetterTestData.TextCertificateAsync(host, "Salary certificate");
 
         var preview = await host.SendOkAsync(new PreviewLetterQuery(rina, certificate, null, null, Today, null));
         preview.Body.Should().Contain("**Rina Das** (E1)").And.Contain("Accounts Officer").And.Contain("47,500").And.Contain("Her current monthly");
@@ -126,7 +126,7 @@ public class LetterTests
     {
         var (host, rina, kamal) = await SetUpAsync();
         await using var _ = host;
-        var certificate = await TemplateAsync(host, "Salary certificate");
+        var certificate = await LetterTestData.TextCertificateAsync(host, "Salary certificate");
         var inputs = new Dictionary<string, string?> { ["Purpose"] = "a bank loan" };
         var folder = Path.Combine(host.Root, "each");
         Directory.CreateDirectory(folder);
@@ -154,7 +154,7 @@ public class LetterTests
     {
         var (host, rina, _) = await SetUpAsync();
         await using var _ = host;
-        var experience = await TemplateAsync(host, "Experience certificate");
+        var experience = await LetterTestData.TextCertificateAsync(host, "Experience certificate");
         var path = Path.Combine(host.Root, "x.pdf");
 
         (await host.SendFailAsync(new IssueLettersCommand(experience, [rina], Today, null, path))).Message.Should().Contain("last working day");

@@ -48,6 +48,17 @@
                 <ui:TextBox Text="{Binding TaxIdentifier, UpdateSourceTrigger=PropertyChanged}" />
               </StackPanel>
             </UniformGrid>
+            <UniformGrid Columns="2">
+              <StackPanel Margin="0,0,8,4">
+                <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Settings_SignatoryName}" />
+                <ui:TextBox MaxLength="150" Text="{Binding SignatoryName, UpdateSourceTrigger=PropertyChanged}" />
+              </StackPanel>
+              <StackPanel Margin="0,0,0,4">
+                <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Settings_SignatoryTitle}" />
+                <ui:TextBox MaxLength="100" Text="{Binding SignatoryTitle, UpdateSourceTrigger=PropertyChanged}" />
+              </StackPanel>
+            </UniformGrid>
+            <TextBlock Margin="0,0,0,12" Style="{StaticResource Caption}" Text="{x:Static res:Strings.Settings_SignatoryHint}" TextWrapping="Wrap" />
           </StackPanel>
         </ui:Card>
 

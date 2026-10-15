@@ -5,7 +5,11 @@ using SuperOfc.Infrastructure.Persistence;
 
 namespace SuperOfc.Infrastructure.Seed;
 
-/// <summary>Gives companies created before the payroll module the default salary components. Does nothing once any exist.</summary>
+/// <summary>
+/// Gives companies created before the payroll module the default salary components, and companies created before the
+/// standard Word letters the "Other allowance" component (code OTHER) their salary certificate prints. Never re-adds a
+/// component the company deleted.
+/// </summary>
 internal sealed class PayrollDefaultsSeeder(IIdGenerator ids) : IDataSeeder
 {
     public int Order => 30;
@@ -17,6 +21,12 @@ internal sealed class PayrollDefaultsSeeder(IIdGenerator ids) : IDataSeeder
         {
             if (await db.SalaryComponents.AnyAsync(c => c.CompanyId == companyId, cancellationToken).ConfigureAwait(false))
             {
+                if (!await db.SalaryComponents.IgnoreQueryFilters()
+                        .AnyAsync(c => c.CompanyId == companyId && c.Code == PayrollDefaults.OtherCode, cancellationToken).ConfigureAwait(false))
+                {
+                    db.SalaryComponents.Add(PayrollDefaults.Other(companyId, ids.NewId));
+                }
+
                 continue;
             }
 

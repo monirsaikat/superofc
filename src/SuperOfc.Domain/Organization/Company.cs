@@ -24,6 +24,12 @@ public sealed class Company : Entity
 
     public string? TaxIdentifier { get; set; }
 
+    /// <summary>Who signs HR letters, e.g. "MD Hasibur Rahman Hasan"; printed by <c>{Company.SignatoryName}</c>.</summary>
+    public string? SignatoryName { get; set; }
+
+    /// <summary>The signatory's title, e.g. "Head of Operations"; printed by <c>{Company.SignatoryTitle}</c>.</summary>
+    public string? SignatoryTitle { get; set; }
+
     public string? LogoPath { get; set; }
 
     /// <summary>ISO 4217 code, e.g. BDT, USD.</summary>

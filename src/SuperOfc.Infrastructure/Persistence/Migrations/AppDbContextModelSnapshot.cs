@@ -1797,6 +1797,14 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SignatoryName")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SignatoryTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("TaxIdentifier")
                         .HasMaxLength(4000)
                         .HasColumnType("TEXT");

@@ -64,6 +64,32 @@ public class SetupTests
         var audits = await host.WithDbAsync(db => db.AuditEntries.Where(a => a.Action == "Company.Updated").ToListAsync());
         audits.Should().ContainSingle().Which.BeforeJson.Should().Contain("Test Co");
     }
+
+    [Fact]
+    public async Task Company_keeps_who_signs_letters()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var company = await host.SendOkAsync(new GetCompanyQuery());
+        company.SignatoryName.Should().BeNull();
+        company.SignatoryTitle.Should().BeNull();
+        UpdateCompanyCommand Update(string? name, string? title) => new(
+            company.Name, company.Address, company.Phone, company.Email, company.TaxIdentifier, company.LogoPath, company.CurrencyCode, company.CurrencySymbol,
+            company.Grouping, company.TimeZoneId, company.FiscalYearStartMonth, company.DateFormat, company.WorkingWeek, name, title);
+
+        await host.SendOkAsync(Update("  Md. Hasibur Rahman Hasan ", " Head of Operations "));
+        (await host.SendOkAsync(new GetCompanyQuery())).Should().Match<CompanyDto>(c => c.SignatoryName == "Md. Hasibur Rahman Hasan"
+            && c.SignatoryTitle == "Head of Operations" && c.Name == "Test Co");
+        var stored = await host.WithDbAsync(db => db.Companies.SingleAsync(c => c.Id == host.CompanyId));
+        stored.SignatoryName.Should().Be("Md. Hasibur Rahman Hasan");
+        (await host.WithDbAsync(db => db.AuditEntries.Where(a => a.Action == "Company.Updated").ToListAsync()))
+            .Should().ContainSingle().Which.AfterJson.Should().Contain("Head of Operations");
+
+        (await host.SendFailAsync(Update(new string('x', 151), null))).Code.Should().Be("Validation.SignatoryName");
+        (await host.SendFailAsync(Update(null, new string('x', 101)))).Code.Should().Be("Validation.SignatoryTitle");
+
+        await host.SendOkAsync(Update(" ", null));
+        (await host.SendOkAsync(new GetCompanyQuery())).Should().Match<CompanyDto>(c => c.SignatoryName == null && c.SignatoryTitle == null, "blank clears them");
+    }
 }
 
 public class AuthTests

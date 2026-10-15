@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<ISampleDataSeeder, SampleDataSeeder>();
         services.AddScoped<IDataSeeder, Seed.AttendanceDefaultsSeeder>();
         services.AddScoped<IDataSeeder, Seed.PayrollDefaultsSeeder>();
+        services.AddScoped<IDataSeeder, Seed.StandardLettersSeeder>();
 
         return services;
     }

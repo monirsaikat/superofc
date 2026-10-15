@@ -42,8 +42,10 @@ footers and the space left for printed letterhead stay exactly as in your file.
 SuperOfc checks the file first. It refuses macro-enabled files, password-protected files, files that link to other
 files, and fields it does not know (the message lists them).
 
-Ready-made templates for our NOC, certificate of employment, experience certificate and salary certificate are in
-`doc-files/templates`, with a list of the setup each one needs.
+The standard **Salary certificate**, **Experience certificate**, **NOC letter** and **Certificate of employment** are
+already Word templates, made from our own letters. Before issuing them, fill in **Settings › Company › Letters are
+signed by** and the signatory's title, and check the company name there: the letters print exactly what you enter.
+The setup each letter needs (father's name, responsibilities, salary components) is listed in `doc-files/templates`.
 
 **Formats for dates and amounts**
 

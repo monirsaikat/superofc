@@ -163,7 +163,7 @@ public sealed class DeleteLetterTemplateHandler(IAppDbContext db, ICurrentUser u
 [RequiresPermission(Permission.ManageEmployees)]
 public sealed record AddStandardLetterTemplatesCommand : ICommand<int>;
 
-public sealed class AddStandardLetterTemplatesHandler(IAppDbContext db, ICurrentUser user, IIdGenerator ids, IAuditWriter audit)
+public sealed class AddStandardLetterTemplatesHandler(IAppDbContext db, ICurrentUser user, IIdGenerator ids, IAuditWriter audit, IWordLetterService word)
     : IRequestHandler<AddStandardLetterTemplatesCommand, int>
 {
     public async Task<Result<int>> HandleAsync(AddStandardLetterTemplatesCommand request, CancellationToken cancellationToken)
@@ -172,7 +172,7 @@ public sealed class AddStandardLetterTemplatesHandler(IAppDbContext db, ICurrent
             .ConfigureAwait(false)).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var order = existing.Count;
         var added = 0;
-        foreach (var template in LetterDefaults.Templates(user.CompanyId, ids.NewId).Where(t => !existing.Contains(t.Name)))
+        foreach (var template in LetterDefaults.Templates(user.CompanyId, ids.NewId, word).Where(t => !existing.Contains(t.Name)))
         {
             template.SortOrder = order++;
             db.LetterTemplates.Add(template);

@@ -38,11 +38,13 @@ public sealed record CompanyDto(
     string TimeZoneId,
     int FiscalYearStartMonth,
     string DateFormat,
-    WorkingWeek WorkingWeek)
+    WorkingWeek WorkingWeek,
+    string? SignatoryName = null,
+    string? SignatoryTitle = null)
 {
     public static CompanyDto From(Company c) => new(
         c.Id, c.Name, c.Address, c.Phone, c.Email, c.TaxIdentifier, c.LogoPath, c.CurrencyCode, c.CurrencySymbol,
-        c.Grouping, c.TimeZoneId, c.FiscalYearStartMonth, c.DateFormat, c.WorkingWeek);
+        c.Grouping, c.TimeZoneId, c.FiscalYearStartMonth, c.DateFormat, c.WorkingWeek, c.SignatoryName, c.SignatoryTitle);
 }
 
 /// <summary>Validation shared by setup and company settings.</summary>
@@ -126,7 +128,8 @@ public sealed class CompleteSetupHandler(
     IUserSession session,
     IAuditWriter audit,
     ISampleDataSeeder sampleData,
-    ICompanyContext companyContext) : IRequestHandler<CompleteSetupCommand, Guid>
+    ICompanyContext companyContext,
+    Letters.IWordLetterService word) : IRequestHandler<CompleteSetupCommand, Guid>
 {
     public async Task<Result<Guid>> HandleAsync(CompleteSetupCommand request, CancellationToken cancellationToken)
     {
@@ -171,7 +174,7 @@ public sealed class CompleteSetupHandler(
             var (components, structure) = Payroll.PayrollDefaults.Create(company.Id, ids.NewId);
             db.SalaryComponents.AddRange(components);
             db.SalaryStructures.Add(structure);
-            db.LetterTemplates.AddRange(Letters.LetterDefaults.Templates(company.Id, ids.NewId));
+            db.LetterTemplates.AddRange(Letters.LetterDefaults.Templates(company.Id, ids.NewId, word));
 
             session.SetCompany(company.Id);
             audit.Record("Setup.Completed", $"Company '{company.Name}' created with administrator {admin.Username}.", nameof(Company), company.Id);
@@ -215,7 +218,9 @@ public sealed record UpdateCompanyCommand(
     string TimeZoneId,
     int FiscalYearStartMonth,
     string DateFormat,
-    WorkingWeek WorkingWeek) : ICommand<Unit>;
+    WorkingWeek WorkingWeek,
+    string? SignatoryName = null,
+    string? SignatoryTitle = null) : ICommand<Unit>;
 
 public sealed class UpdateCompanyValidator : AbstractValidator<UpdateCompanyCommand>
 {
@@ -223,6 +228,8 @@ public sealed class UpdateCompanyValidator : AbstractValidator<UpdateCompanyComm
     {
         CompanyRules.Apply(this, x => x.Name, x => x.CurrencyCode, x => x.CurrencySymbol, x => x.TimeZoneId, x => x.FiscalYearStartMonth, x => x.DateFormat);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
+        RuleFor(x => x.SignatoryName).MaximumLength(150);
+        RuleFor(x => x.SignatoryTitle).MaximumLength(100);
     }
 }
 
@@ -251,6 +258,8 @@ public sealed class UpdateCompanyHandler(IAppDbContext db, ICurrentUser current,
         company.FiscalYearStartMonth = request.FiscalYearStartMonth;
         company.DateFormat = request.DateFormat;
         company.WorkingWeek = request.WorkingWeek;
+        company.SignatoryName = string.IsNullOrWhiteSpace(request.SignatoryName) ? null : request.SignatoryName.Trim();
+        company.SignatoryTitle = string.IsNullOrWhiteSpace(request.SignatoryTitle) ? null : request.SignatoryTitle.Trim();
         audit.Record("Company.Updated", "Company settings updated.", nameof(Company), company.Id, before, CompanyDto.From(company));
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await companyContext.RefreshAsync(cancellationToken).ConfigureAwait(false);

@@ -79,6 +79,8 @@ public static class LetterFields
         new("Company.Phone", "Company phone"),
         new("Company.Email", "Company e-mail"),
         new("Company.CurrencyCode", "Currency code, e.g. BDT"),
+        new("Company.SignatoryName", "Who signs letters (Settings > Company)"),
+        new("Company.SignatoryTitle", "The signatory's title (Settings > Company)"),
         new("Company.CurrencySymbol", "Currency symbol, e.g. ৳"),
         new("Letter.Number", "Reference number, e.g. HR/2026/0001"),
         new("Letter.Date", "Letter date", Type: LetterFieldType.Date),
@@ -371,6 +373,8 @@ public sealed class LetterData(IAppDbContext db, ICurrentUser user, ICompanyCont
             v.Set("Company.Email", info.Email);
             v.Set("Company.CurrencyCode", info.CurrencyCode);
             v.Set("Company.CurrencySymbol", info.CurrencySymbol);
+            v.Set("Company.SignatoryName", info.SignatoryName);
+            v.Set("Company.SignatoryTitle", info.SignatoryTitle);
             v.Set("Letter.Date", letterDate);
             v.Set("Today", letterDate);
 
@@ -397,6 +401,14 @@ public sealed class LetterData(IAppDbContext db, ICurrentUser user, ICompanyCont
                     v.Set("Salary.NetInWords", AmountInWords.Format(now.Net, info.CurrencyCode, info.Grouping));
                     v.Set("Salary.YearlyGross", new Money(now.Gross.Minor * 12));
                     v.Set("Salary.EffectiveFrom", current!.EffectiveFrom);
+
+                    // A component the employee's salary does not include prints as 0, so a letter that lists
+                    // fixed rows (Basic, House rent, Medical, Other) is never blocked by an unused one.
+                    foreach (var component in components)
+                    {
+                        v.Set("Salary." + component.Code, new Money(0));
+                    }
+
                     foreach (var line in now.Lines)
                     {
                         v.Set("Salary." + line.Code, line.Amount);
@@ -461,7 +473,72 @@ public static class LetterDefaults
 {
     private const string Signature = "\n\nFor **{Company.Name}**\n\n\n\nAuthorised signatory";
 
-    public static IEnumerable<LetterTemplate> Templates(Guid companyId, Func<Guid> newId)
+    /// <summary>
+    /// The standard letters that are the company's own Word files (ADR-24), embedded from doc-files/templates.
+    /// The file name is kept in <see cref="LetterTemplate.DocumentFileName"/> and marks the template as provided, so a
+    /// deleted or edited copy is never added again.
+    /// </summary>
+    public static IReadOnlyList<StandardWordLetter> WordLetters { get; } =
+    [
+        new("Salary certificate", LetterKind.SalaryCertificate, "Salary certificate", "Salary certificate.docx", 3),
+        new("Experience certificate", LetterKind.ExperienceCertificate, "Experience certificate", "Experience certificate.docx", 4),
+        new("NOC letter", LetterKind.Other, "NOC letter for job change", "NOC letter.docx", 5),
+        new("Certificate of employment", LetterKind.Other, "Certificate of employment", "Certificate of employment.docx", 6),
+    ];
+
+    /// <summary>Every standard template: text letters, and the Word letters filled from their embedded files.</summary>
+    public static IEnumerable<LetterTemplate> Templates(Guid companyId, Func<Guid> newId, IWordLetterService word)
+    {
+        ArgumentNullException.ThrowIfNull(newId);
+        ArgumentNullException.ThrowIfNull(word);
+        return [.. TextTemplates(companyId, newId), .. WordLetters.Select(w => w.Create(companyId, newId(), word))];
+    }
+
+    /// <summary>
+    /// Brings a company's templates up to the current standard set: the old built-in text versions of letters that are
+    /// now Word letters become Word letters when nobody has changed them; missing Word letters are added. A Word letter
+    /// that was provided before (even if deleted since) or that the company already uploaded is left alone.
+    /// </summary>
+    /// <param name="existing">All of the company's templates, including deleted ones.</param>
+    /// <returns>The templates to add; <paramref name="existing"/> items may also have been changed in place.</returns>
+    public static IReadOnlyList<LetterTemplate> Upgrade(IReadOnlyList<LetterTemplate> existing, Guid companyId, Func<Guid> newId, IWordLetterService word)
+    {
+        ArgumentNullException.ThrowIfNull(existing);
+        ArgumentNullException.ThrowIfNull(newId);
+        ArgumentNullException.ThrowIfNull(word);
+        var added = new List<LetterTemplate>();
+        var nextOrder = existing.Count == 0 ? 0 : existing.Max(t => t.SortOrder) + 1;
+        foreach (var standard in WordLetters)
+        {
+            // An untouched built-in text certificate is always ours to replace, even when a copy of the Word file was
+            // uploaded by hand under another name (1.0.0-beta.4 had no built-in Word letters).
+            var sameName = existing.FirstOrDefault(t => t.DeletedAtUtc is null && string.Equals(t.Name, standard.Name, StringComparison.OrdinalIgnoreCase));
+            if (sameName is not null && !sameName.IsWord && IsUntouchedLegacy(sameName))
+            {
+                standard.Apply(sameName, word);
+                continue;
+            }
+
+            if (existing.Any(t => string.Equals(t.DocumentFileName, standard.FileName, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var template = standard.Create(companyId, newId(), word);
+            template.SortOrder = nextOrder++;
+            if (existing.Concat(added).Any(t => t.DeletedAtUtc is null && string.Equals(t.Name, template.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                // The company has its own letter with this name; keep it and add ours beside it.
+                template.Name = standard.Name + " (Word)";
+            }
+
+            added.Add(template);
+        }
+
+        return added;
+    }
+
+    private static IEnumerable<LetterTemplate> TextTemplates(Guid companyId, Func<Guid> newId)
     {
         var order = 0;
         LetterTemplate T(string name, LetterKind kind, string subject, string body) => new()
@@ -482,19 +559,63 @@ public static class LetterDefaults
             "Dear {Employee.Title} {Employee.Name},\n\nIn recognition of your performance, your monthly gross salary is revised from {Salary.PreviousGross} "
             + "to **{Salary.NewGross}** with effect from **{Salary.NewEffectiveFrom}**, an increase of {Salary.Increase}.\n\n"
             + "All other terms of your employment remain the same.");
-        yield return T("Salary certificate", LetterKind.SalaryCertificate, "Salary certificate",
-            "To whom it may concern\n\nThis is to certify that **{Employee.Name}** ({Employee.Code}) has been working with {Company.Name} as "
-            + "{Employee.Designation} since {Employee.JoinDate}.\n\n{Employee.HisHer} current monthly gross salary is **{Salary.Gross}** "
-            + "({Salary.GrossInWords}).\n\nThis certificate is issued at {Employee.HisHer} request for {Input.Purpose}.");
-        yield return T("Experience certificate", LetterKind.ExperienceCertificate, "Experience certificate",
-            "To whom it may concern\n\nThis is to certify that **{Employee.Name}** ({Employee.Code}) worked with {Company.Name} from "
-            + "**{Employee.JoinDate}** to **{Employee.ExitDate}**, a period of {Employee.Service}. At the time of leaving, {Employee.HeShe} was "
-            + "{Employee.Designation} in the {Employee.Department} department.\n\nWe wish {Employee.HimHer} success in the future.");
+        order = 7;
         yield return T("Relieving letter", LetterKind.Relieving, "Relieving letter",
             "Dear {Employee.Title} {Employee.Name},\n\nThis is to confirm that you are relieved from your duties as {Employee.Designation} "
             + "at the close of business on **{Employee.ExitDate}**.\n\nWe thank you for your service and wish you well.");
         yield return T("Warning letter", LetterKind.Warning, "Warning",
             "Dear {Employee.Title} {Employee.Name},\n\nThis letter is a formal warning about **{Input.Reason}**.\n\n{Input.Details}\n\n"
             + "We expect immediate improvement. A repeat may lead to further disciplinary action under company policy.");
+    }
+
+    /// <summary>The text versions of the salary and experience certificates that versions before 1.0.0-beta.5 created.</summary>
+    private static readonly IReadOnlyDictionary<string, (string Subject, string Body)> Legacy = new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Salary certificate"] = ("Salary certificate",
+            "To whom it may concern\n\nThis is to certify that **{Employee.Name}** ({Employee.Code}) has been working with {Company.Name} as "
+            + "{Employee.Designation} since {Employee.JoinDate}.\n\n{Employee.HisHer} current monthly gross salary is **{Salary.Gross}** "
+            + "({Salary.GrossInWords}).\n\nThis certificate is issued at {Employee.HisHer} request for {Input.Purpose}." + Signature),
+        ["Experience certificate"] = ("Experience certificate",
+            "To whom it may concern\n\nThis is to certify that **{Employee.Name}** ({Employee.Code}) worked with {Company.Name} from "
+            + "**{Employee.JoinDate}** to **{Employee.ExitDate}**, a period of {Employee.Service}. At the time of leaving, {Employee.HeShe} was "
+            + "{Employee.Designation} in the {Employee.Department} department.\n\nWe wish {Employee.HimHer} success in the future." + Signature),
+    };
+
+    private static bool IsUntouchedLegacy(LetterTemplate template)
+        => Legacy.TryGetValue(template.Name, out var legacy)
+           && template.Subject == legacy.Subject
+           && template.Body.Replace("\r\n", "\n", StringComparison.Ordinal) == legacy.Body;
+}
+
+/// <summary>A standard Word letter embedded in the application (<c>Letters.Standard.&lt;file name&gt;</c>).</summary>
+public sealed record StandardWordLetter(string Name, LetterKind Kind, string Subject, string FileName, int SortOrder)
+{
+    /// <summary>The embedded .docx.</summary>
+    public byte[] Document()
+    {
+        using var stream = typeof(StandardWordLetter).Assembly.GetManifestResourceStream("Letters.Standard." + FileName)
+            ?? throw new InvalidOperationException($"The standard letter {FileName} is missing from the application.");
+        using var copy = new MemoryStream();
+        stream.CopyTo(copy);
+        return copy.ToArray();
+    }
+
+    public LetterTemplate Create(Guid companyId, Guid id, IWordLetterService word)
+    {
+        var template = new LetterTemplate { Id = id, CompanyId = companyId, Name = Name, Kind = Kind, Subject = Subject, NumberPrefix = "HR", SortOrder = SortOrder };
+        Apply(template, word);
+        return template;
+    }
+
+    /// <summary>Makes <paramref name="template"/> this Word letter: its file, file name, hash and the document text as the body.</summary>
+    public void Apply(LetterTemplate template, IWordLetterService word)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        ArgumentNullException.ThrowIfNull(word);
+        var bytes = Document();
+        template.Document = bytes;
+        template.DocumentFileName = FileName;
+        template.DocumentSha256 = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes));
+        template.Body = word.Text(bytes);
     }
 }

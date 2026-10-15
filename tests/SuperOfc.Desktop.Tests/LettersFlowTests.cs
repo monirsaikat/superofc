@@ -32,7 +32,9 @@ public class LettersFlowTests
         page.PreviewDelay = TimeSpan.Zero;
 
         await page.OnNavigatedToAsync(null);
-        page.Templates.Should().HaveCount(7, "setup adds the standard letters");
+        page.Templates.Should().HaveCount(9, "setup adds the standard letters");
+        page.Templates.Where(t => t.IsWord).Select(t => t.Name).Should().BeEquivalentTo(
+            ["Salary certificate", "Experience certificate", "NOC letter", "Certificate of employment"], "four of them are the company's Word letters");
         page.Fields.Should().Contain(f => f.Key == "Employee.Name");
 
         page.FieldSearch = "words";

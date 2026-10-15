@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SuperOfc.Application.Attendance;
 using SuperOfc.Application.Leave;
 using SuperOfc.Application.Payroll;
@@ -27,6 +28,43 @@ public class SalarySetupTests
 
         var structure = (await host.SendOkAsync(new GetSalaryStructuresQuery())).Single();
         structure.Lines.Select(l => l.Code).Should().Equal("BASIC", "HRA", "MEDICAL", "CONV");
+        components.Single(c => c.Code == "OTHER").Should().Match<SalaryComponentDto>(c => c.IsActive && c.Kind == ComponentKind.Earning
+            && c.Calc == ComponentCalc.Fixed && c.DefaultAmount.Minor == 0, "the standard salary certificate prints the Other allowance");
+    }
+
+    [Fact]
+    public async Task Startup_adds_the_other_allowance_to_older_companies_once_and_never_after_a_delete()
+    {
+        await using var host = await TestHost.CreateAsync();
+        Task<List<SalaryComponent>> OthersAsync() => host.WithDbAsync(db => db.SalaryComponents.IgnoreQueryFilters().AsNoTracking()
+            .Where(c => c.CompanyId == host.CompanyId && c.Code == "OTHER").ToListAsync());
+        async Task RestartAsync()
+        {
+            var init = await host.Services.GetRequiredService<SuperOfc.Infrastructure.Persistence.DatabaseInitializer>().InitializeAsync();
+            init.State.Should().Be(SuperOfc.Infrastructure.Persistence.DatabaseState.Ready, init.Message);
+        }
+
+        // A company set up before the Other allowance existed.
+        await host.WithDbAsync(async db =>
+        {
+            db.SalaryComponents.RemoveRange(await db.SalaryComponents.IgnoreQueryFilters().Where(c => c.Code == "OTHER").ToListAsync());
+            return await db.SaveChangesAsync();
+        });
+        (await OthersAsync()).Should().BeEmpty();
+
+        await RestartAsync();
+        var added = (await OthersAsync()).Should().ContainSingle().Subject;
+        added.Should().Match<SalaryComponent>(c => c.IsActive && c.DeletedAtUtc == null && c.Kind == ComponentKind.Earning && c.Calc == ComponentCalc.Fixed
+            && c.DefaultAmountMinor == 0 && c.Name == "Other allowance");
+        (await host.SendOkAsync(new GetSalaryStructuresQuery())).Single().Lines.Select(l => l.Code).Should().NotContain("OTHER", "it changes no one's pay");
+
+        await RestartAsync();
+        (await OthersAsync()).Should().ContainSingle("it is added once");
+
+        await host.SendOkAsync(new DeleteSalaryComponentCommand(added.Id));
+        await RestartAsync();
+        (await OthersAsync()).Should().ContainSingle().Which.DeletedAtUtc.Should().NotBeNull("a component the company deleted stays deleted");
+        (await host.SendOkAsync(new GetSalaryComponentsQuery())).Should().NotContain(c => c.Code == "OTHER");
     }
 
     [Fact]
