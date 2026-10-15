@@ -16,6 +16,8 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options) : DbCo
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<SignInToken> SignInTokens => Set<SignInToken>();
+
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
 
     public DbSet<Setting> Settings => Set<Setting>();

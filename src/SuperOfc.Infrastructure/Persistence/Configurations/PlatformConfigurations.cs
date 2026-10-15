@@ -32,6 +32,17 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
     }
 }
 
+internal sealed class SignInTokenConfiguration : IEntityTypeConfiguration<SignInToken>
+{
+    public void Configure(EntityTypeBuilder<SignInToken> builder)
+    {
+        builder.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();
+        builder.HasIndex(t => t.TokenHash).IsUnique();
+        builder.HasIndex(t => t.UserId);
+        builder.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 internal sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntry>
 {
     public void Configure(EntityTypeBuilder<AuditEntry> builder)

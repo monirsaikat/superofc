@@ -88,6 +88,38 @@ public class LoginAndShellTests
     }
 
     [Fact]
+    public async Task Keep_me_signed_in_skips_the_login_screen_until_sign_out()
+    {
+        await using var host = await DesktopTestHost.CreateAsync(completeSetup: true);
+        var main = host.Get<MainViewModel>();
+        var session = host.Get<SuperOfc.Application.Abstractions.IUserSession>();
+        await main.ShowEntryScreenAsync();
+        main.CurrentScreen.Should().BeOfType<LoginViewModel>().Which.KeepSignedIn.Should().BeTrue("staying signed in is the default");
+        await SignInAsync(host, "admin", DesktopTestHost.Password);
+
+        // The app is closed and opened again.
+        session.SignOut();
+        await main.ShowEntryScreenAsync();
+        main.CurrentScreen.Should().BeOfType<ShellViewModel>();
+        session.UserName.Should().Be("admin");
+
+        await main.SignOutAsync();
+        main.CurrentScreen.Should().BeOfType<LoginViewModel>();
+        host.Get<SuperOfc.Application.Abstractions.ISignInTokenStore>().Load().Should().BeNull("signing out forgets this PC");
+        await main.ShowEntryScreenAsync();
+        main.CurrentScreen.Should().BeOfType<LoginViewModel>("after signing out the password is needed again");
+
+        var login = (LoginViewModel)main.CurrentScreen!;
+        login.KeepSignedIn = false;
+        login.Username = "admin";
+        login.Password = DesktopTestHost.Password;
+        await login.SignInCommand.ExecuteAsync(null);
+        session.SignOut();
+        await main.ShowEntryScreenAsync();
+        main.CurrentScreen.Should().BeOfType<LoginViewModel>("the user chose not to stay signed in");
+    }
+
+    [Fact]
     public async Task Viewer_sees_only_permitted_areas()
     {
         await using var host = await DesktopTestHost.CreateAsync(completeSetup: true);

@@ -1267,6 +1267,10 @@ public static class Strings
 
     public static string Lock_Unlock => Get("Lock_Unlock");
 
+    public static string Login_KeepSignedIn => Get("Login_KeepSignedIn");
+
+    public static string Login_KeepSignedInHint => Get("Login_KeepSignedInHint");
+
     public static string Login_Password => Get("Login_Password");
 
     public static string Login_SignIn => Get("Login_SignIn");

@@ -30,6 +30,12 @@
           </ui:PasswordBox>
         </StackPanel>
 
+        <CheckBox
+            Margin="0,0,0,12"
+            Content="{x:Static res:Strings.Login_KeepSignedIn}"
+            IsChecked="{Binding KeepSignedIn}"
+            ToolTip="{x:Static res:Strings.Login_KeepSignedInHint}" />
+
         <TextBlock
             Margin="0,0,0,12"
             Style="{StaticResource ErrorText}"

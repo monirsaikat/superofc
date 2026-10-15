@@ -110,6 +110,11 @@ public sealed class UpdateUserHandler(IAppDbContext db, ICurrentUser current, IA
         user.DisplayName = request.DisplayName.Trim();
         user.Role = request.Role;
         user.IsActive = request.IsActive;
+        if (!user.IsActive)
+        {
+            await SignInTokens.RevokeAllAsync(db, user.Id, cancellationToken).ConfigureAwait(false);
+        }
+
         audit.Record("User.Updated", $"Updated user {user.Username}.", nameof(User), user.Id, before, new { user.DisplayName, user.Role, user.IsActive });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
@@ -140,6 +145,7 @@ public sealed class ResetPasswordHandler(IAppDbContext db, IPasswordHasher hashe
         user.PasswordHash = hasher.Hash(request.NewPassword);
         user.FailedAttempts = 0;
         user.LockoutUntilUtc = null;
+        await SignInTokens.RevokeAllAsync(db, user.Id, cancellationToken).ConfigureAwait(false);
         audit.Record("User.PasswordReset", $"Password reset for {user.Username}.", nameof(User), user.Id);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

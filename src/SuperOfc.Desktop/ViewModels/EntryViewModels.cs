@@ -90,6 +90,10 @@ public sealed partial class LoginViewModel(IDispatcher dispatcher, MainViewModel
     [NotifyCanExecuteChangedFor(nameof(SignInCommand))]
     public partial string Password { get; set; } = string.Empty;
 
+    /// <summary>Skip this screen next time the app opens on this PC (until sign-out).</summary>
+    [ObservableProperty]
+    public partial bool KeepSignedIn { get; set; } = true;
+
     public string Subtitle => string.Format(CultureInfo.CurrentCulture, Strings.Login_Subtitle, CompanyName);
 
     public string VersionText => string.Format(CultureInfo.CurrentCulture, Strings.App_Version, ((App)System.Windows.Application.Current).Services.GetRequiredService<IAppEnvironment>().AppVersion);
@@ -105,7 +109,7 @@ public sealed partial class LoginViewModel(IDispatcher dispatcher, MainViewModel
         ErrorMessage = null;
         try
         {
-            var result = await dispatcher.SendAsync(new LoginCommand(Username, Password)).ConfigureAwait(true);
+            var result = await dispatcher.SendAsync(new LoginCommand(Username, Password, KeepSignedIn)).ConfigureAwait(true);
             if (result.IsFailure)
             {
                 ErrorMessage = ErrorText.For(result.Errors);
@@ -114,7 +118,7 @@ public sealed partial class LoginViewModel(IDispatcher dispatcher, MainViewModel
             }
 
             Password = string.Empty;
-            await main.OnSignedInAsync().ConfigureAwait(true);
+            await main.OnSignedInAsync(result.Value.RememberToken).ConfigureAwait(true);
         }
         finally
         {
@@ -339,12 +343,12 @@ public sealed partial class SetupWizardViewModel : EditableViewModel
             return;
         }
 
-        var login = await Dispatcher.SendAsync(new LoginCommand(AdminUsername, AdminPassword)).ConfigureAwait(true);
+        var login = await Dispatcher.SendAsync(new LoginCommand(AdminUsername, AdminPassword, Remember: true)).ConfigureAwait(true);
         AdminPassword = ConfirmPassword = string.Empty;
         IsDirty = false;
         if (login.IsSuccess)
         {
-            await _main.OnSignedInAsync().ConfigureAwait(true);
+            await _main.OnSignedInAsync(login.Value.RememberToken).ConfigureAwait(true);
         }
         else
         {

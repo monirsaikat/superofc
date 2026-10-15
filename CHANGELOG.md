@@ -6,6 +6,7 @@ Format follows Keep a Changelog; versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Keep me signed in on this PC: SuperOfc opens without asking for the password again until you sign out. On by default; the idle lock still applies.
 - The standard salary certificate, experience certificate, NOC letter and certificate of employment are now the company's own Word letters, so issued letters look exactly like the Word files. Copies already installed switch over automatically when their built-in certificates were never edited.
 - Settings › Company: who signs letters and their title, printed at the end of the standard letters.
 - Salary components the employee's salary does not include print as 0 in letters; a zero "Other allowance" (OTHER) component is added for the salary certificate.

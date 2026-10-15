@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddSingleton<IPolicyProvider, PolicyProvider>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddSingleton<ISecretProtector, DpapiSecretProtector>();
+        services.AddSingleton<ISignInTokenStore, DpapiSignInTokenStore>();
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<ISettingsStore, SettingsStore>();

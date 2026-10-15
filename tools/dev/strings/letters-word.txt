@@ -43,3 +43,7 @@ Letters_IssueWord=Issue and save
 Settings_SignatoryName=Letters are signed by
 Settings_SignatoryTitle=Signatory's title
 Settings_SignatoryHint=Printed at the end of HR letters, for example "MD Hasibur Rahman Hasan" and "Head of Operations".
+
+# Sign-in: stay signed in
+Login_KeepSignedIn=Keep me signed in on this PC
+Login_KeepSignedInHint=Opens straight to SuperOfc next time, until you sign out. The screen still locks when idle.

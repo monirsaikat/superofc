@@ -26,7 +26,7 @@ public partial class SecurityTests
     public void Only_sign_in_and_first_run_requests_work_without_signing_in()
     {
         var anonymous = DependencyInjection.RequestTypes().Where(t => t.IsDefined(typeof(AllowAnonymousAttribute), false)).Select(t => t.Name).Order(StringComparer.Ordinal);
-        anonymous.Should().Equal("CompleteSetupCommand", "GetSetupStatusQuery", "LoginCommand", "LogoutCommand", "UnlockCommand");
+        anonymous.Should().Equal("CompleteSetupCommand", "GetSetupStatusQuery", "LoginCommand", "LogoutCommand", "ResumeSignInCommand", "UnlockCommand");
     }
 
     [Fact]
