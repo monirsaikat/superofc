@@ -35,7 +35,7 @@ Every field has a type (`LetterFieldType`): `Text`, `Lines` (may hold several li
 |------|-----------|---------|
 | Text, Lines | value as stored | `upper`, `lower`, `cap` (first letter upper case), `title` (Title Case) |
 | Date | company date format, current culture (unchanged behaviour) | `ord`: the ordinal suffix of the day only (`st`, `nd`, `rd`, `th`; 11–13 give `th`). Anything else is a .NET custom date format rendered with the **en-US** culture; a one-character format is treated as custom (`d` gives `1`, not a short date). An invalid pattern is a validation error. Examples: `%d` or `d` gives `1`, `d MMMM yyyy` gives `1 June 2023`, `MMMM d, yyyy` gives `June 1, 2023`. |
-| Money | `MoneyFormatter.Format` (symbol, 2 decimals; unchanged) | `n0` (grouped number, no symbol, no decimals: `70,000`), `n2` (`70,000.00`), `words` (whole major units in words, no currency, no "Only": `Seventy Thousand`; uses `AmountInWords.Words` with the company grouping) |
+| Money | `MoneyFormatter.Format` (symbol, 2 decimals; unchanged) | `n0` (grouped number, no symbol, no decimals: `70,000`), `n2` (`70,000.00`), `words` (whole major units in words, no currency, no "Only": `Seventy Thousand`; uses `AmountInWords.Words` with the company grouping). `n0` and `words` round the same way, half away from zero to whole units, so `70,000.50` prints `70,001` and `Seventy Thousand One`; "Minus " is left out when the rounded amount is zero |
 
 Format names are case-insensitive except date patterns, which are passed as typed.
 
@@ -65,7 +65,9 @@ field superscript in Word. The filled value takes the formatting of the run wher
   `vbaProject` part), not encrypted or password protected, no external relationships other than `http`, `https` and `mailto`
   hyperlinks, no `altChunk`, no `INCLUDETEXT`, `INCLUDE`, `INCLUDEPICTURE`, `IMPORT`, `LINK`, `DDE`, `DDEAUTO`, `DATABASE`, `RD`
   fields, no field whose instruction contains another field, no `w:updateFields`, no `{field}` split by a picture, note reference,
-  symbol or field code. Unknown fields or formats are a validation error listing them.
+  symbol or field code. Unknown fields or formats are a validation error listing them. A document with more than 20,000
+  characters of text is rejected ("This Word file has too much text for a letter (over 20,000 characters).") instead of being
+  cut, so `Body` always holds the whole text and the checks above never miss a field.
 - Filling (Infrastructure, Open XML SDK 3.1.1, direct package reference): per paragraph, join the text of all `w:t` in runs that
   are children of the paragraph (also inside `w:hyperlink`, `w:smartTag`, `w:fldSimple`, `w:ins`), skipping `w:proofErr`,
   bookmarks, `w:lastRenderedPageBreak`, `w:commentReference`; a `w:tab`, `w:br`, `w:cr`, drawing, note reference, symbol or field

@@ -217,9 +217,16 @@ public static class LetterFormats
         {
             "N0" => money.Format(amount, withSymbol: false, decimals: 0),
             "N2" => money.Format(amount, withSymbol: false, decimals: 2),
-            "WORDS" => (amount.IsNegative ? "Minus " : string.Empty) + AmountInWords.Words(Math.Abs(amount.Minor) / Money.MinorPerMajor, money.Grouping),
+            "WORDS" => Words(amount, money.Grouping),
             _ => null,
         };
+    }
+
+    /// <summary>Whole units in words, rounded half away from zero like <c>n0</c>, so the figure and the words agree.</summary>
+    private static string Words(Money amount, NumberGrouping grouping)
+    {
+        var whole = (long)Math.Round(Math.Abs(amount.Major), 0, MidpointRounding.AwayFromZero);
+        return (amount.IsNegative && whole != 0 ? "Minus " : string.Empty) + AmountInWords.Words(whole, grouping);
     }
 }
 

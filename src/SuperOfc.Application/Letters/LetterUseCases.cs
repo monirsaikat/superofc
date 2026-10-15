@@ -371,7 +371,7 @@ public sealed class IssueLettersHandler(IAppDbContext db, ICurrentUser user, ICo
             else
             {
                 var info = company.Company ?? throw new InvalidOperationException("Company is not loaded.");
-                written.AddRange(LetterIssue.Write(pdf, PayrollExportData.Header(info, files), documents, request.Path, request.OneFilePerEmployee, template.Name));
+                LetterIssue.Write(pdf, PayrollExportData.Header(info, files), documents, request.Path, request.OneFilePerEmployee, template.Name, written);
             }
         }
         catch (WordConversionException ex)
@@ -445,26 +445,30 @@ public static class LetterIssue
             ? field[(LetterText.InputGroup.Length + 1)..] + " (typed when issuing)"
             : LetterFields.All.FirstOrDefault(f => string.Equals(f.Key, field, StringComparison.OrdinalIgnoreCase))?.Description.ToLowerInvariant() ?? field;
 
-    public static List<string> Write(ILetterPdfService pdf, PayslipCompany header, IReadOnlyList<LetterDocument> documents, string path, bool perEmployee, string name)
+    /// <summary>
+    /// Writes the letters as one PDF, or one PDF per employee into the folder <paramref name="path"/>. Each file is added to
+    /// <paramref name="written"/> as soon as it is written, so a caller can delete them all when a later file fails.
+    /// </summary>
+    public static void Write(ILetterPdfService pdf, PayslipCompany header, IReadOnlyList<LetterDocument> documents, string path, bool perEmployee, string name,
+        ICollection<string> written)
     {
         ArgumentNullException.ThrowIfNull(pdf);
         ArgumentNullException.ThrowIfNull(documents);
+        ArgumentNullException.ThrowIfNull(written);
         if (!perEmployee)
         {
             pdf.Write(header, documents, path);
-            return [path];
+            written.Add(path);
+            return;
         }
 
         Directory.CreateDirectory(path);
-        var written = new List<string>();
         foreach (var d in documents)
         {
             var file = System.IO.Path.Combine(path, Safe($"{name} {d.EmployeeCode} {d.EmployeeName}.pdf"));
             pdf.Write(header, [d], file);
             written.Add(file);
         }
-
-        return written;
     }
 
     public static string Safe(string name) => new([.. name.Select(c => System.IO.Path.GetInvalidFileNameChars().Contains(c) ? '-' : c)]);

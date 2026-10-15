@@ -144,6 +144,48 @@ public class WordLetterTests
         (await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, Sample(host, "NOC letter.docx")))).Code.Should().Be("Auth.Forbidden");
     }
 
+    /// <summary>A copy of the NOC letter with a last paragraph of <paramref name="padding"/> characters followed by two fields.</summary>
+    private static string LongSample(TestHost host, string fileName, int padding)
+    {
+        var target = Path.Combine(host.Root, "upload", fileName);
+        File.Copy(Sample(host, "NOC letter.docx"), target, overwrite: true);
+        using (var document = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(target, true))
+        {
+            var body = document.MainDocumentPart!.Document!.Body!;
+            var paragraph = new DocumentFormat.OpenXml.Wordprocessing.Paragraph(new DocumentFormat.OpenXml.Wordprocessing.Run(
+                new DocumentFormat.OpenXml.Wordprocessing.Text(new string('x', padding) + " {Input.Purpose} {Salary.Gross:n0}")));
+            var section = body.Elements<DocumentFormat.OpenXml.Wordprocessing.SectionProperties>().LastOrDefault();
+            if (section is null)
+            {
+                body.AppendChild(paragraph);
+            }
+            else
+            {
+                body.InsertBefore(paragraph, section);
+            }
+        }
+
+        return target;
+    }
+
+    [Fact]
+    public async Task Upload_keeps_the_whole_text_and_rejects_a_file_with_too_much_text()
+    {
+        var (host, _) = await CreateHostAsync();
+        await using var _ = host;
+
+        var tooLong = await host.SendFailAsync(new ImportLetterTemplateDocumentCommand(null, LongSample(host, "Long letter.docx", 20_000)));
+        tooLong.Code.Should().Be("Validation.SourceFilePath");
+        tooLong.Message.Should().Be("This Word file has too much text for a letter (over 20,000 characters).");
+        (await host.SendOkAsync(new GetLetterTemplatesQuery())).Should().OnlyContain(t => !t.IsWord, "nothing is saved, not even a cut copy");
+
+        var id = await host.SendOkAsync(new ImportLetterTemplateDocumentCommand(null, LongSample(host, "Fits letter.docx", 15_000)));
+        var template = (await host.SendOkAsync(new GetLetterTemplatesQuery())).Single(t => t.Id == id);
+        template.Body.Should().Contain("{Input.Purpose} {Salary.Gross:n0}", "fields at the end of a long file are kept");
+        template.Inputs.Should().Equal("Purpose");
+        template.UsesSalary.Should().BeTrue();
+    }
+
     [Fact]
     public async Task Experience_certificate_is_filled_in_word_kept_and_reprinted_identically()
     {

@@ -79,6 +79,12 @@ public sealed class ImportLetterTemplateDocumentHandler(IAppDbContext db, ICurre
             return Error.Validation(Field, "The Word file has no text.");
         }
 
+        // Body keeps the whole text so fields, inputs and the salary check always see every field; it is never cut.
+        if (text.Length > WordLetterFiles.MaxBodyLength)
+        {
+            return Error.Validation(Field, "This Word file has too much text for a letter (over 20,000 characters).");
+        }
+
         var codes = await data.ComponentCodesAsync(cancellationToken).ConfigureAwait(false);
         var unknown = LetterText.Fields(text).Where(f => !LetterFields.IsKnown(f, codes)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (unknown.Count > 0)
@@ -123,7 +129,7 @@ public sealed class ImportLetterTemplateDocumentHandler(IAppDbContext db, ICurre
         template.Document = bytes;
         template.DocumentFileName = WordLetterFiles.Truncate(fileName, 260);
         template.DocumentSha256 = sha;
-        template.Body = WordLetterFiles.Truncate(text, WordLetterFiles.MaxBodyLength);
+        template.Body = text;
         audit.Record("Letter.TemplateFileUploaded", $"{template.Name}: {fileName} (SHA-256 {sha})", nameof(LetterTemplate), template.Id);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return template.Id;

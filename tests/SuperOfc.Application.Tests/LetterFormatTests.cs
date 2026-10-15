@@ -93,6 +93,27 @@ public class LetterFormatTests
     }
 
     [Fact]
+    public void Words_round_like_n0_so_the_figure_and_the_words_agree()
+    {
+        var v = Values();
+        v.Set("Salary.Gross", Money.FromMajor(70_000.50m));
+        v.Resolve("Salary.Gross", "n0").Should().Be("70,001");
+        v.Resolve("Salary.Gross", "words").Should().Be("Seventy Thousand One");
+
+        v.Set("Salary.Gross", Money.FromMajor(70_000.49m));
+        v.Resolve("Salary.Gross", "n0").Should().Be("70,000");
+        v.Resolve("Salary.Gross", "words").Should().Be("Seventy Thousand");
+
+        v.Set("Salary.Increase", Money.FromMajor(-2_000.50m));
+        v.Resolve("Salary.Increase", "n0").Should().Be("-2,001");
+        v.Resolve("Salary.Increase", "words").Should().Be("Minus Two Thousand One");
+
+        v.Set("Salary.Increase", Money.FromMajor(-0.40m));
+        v.Resolve("Salary.Increase", "n0").Should().Be("0");
+        v.Resolve("Salary.Increase", "words").Should().Be("Zero", "an amount that rounds to nothing is not 'Minus Zero'");
+    }
+
+    [Fact]
     public void Text_formats_and_inputs()
     {
         var v = Values();
