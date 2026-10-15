@@ -40,7 +40,11 @@ public sealed class DesktopTestHost : IAsyncDisposable
         where T : notnull
         => Services.GetRequiredService<T>();
 
-    public static async Task<DesktopTestHost> CreateAsync(bool completeSetup, Action<IServiceCollection>? configure = null)
+    /// <summary>
+    /// Builds the host. <paramref name="configure"/> runs before the application layers are added (for options they read);
+    /// <paramref name="overrides"/> runs after them, so its registrations replace real services such as the Word converter.
+    /// </summary>
+    public static async Task<DesktopTestHost> CreateAsync(bool completeSetup, Action<IServiceCollection>? configure = null, Action<IServiceCollection>? overrides = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "superofc-desktop-tests", Guid.NewGuid().ToString("N"));
         var dialogs = Substitute.For<IDialogService>();
@@ -54,6 +58,7 @@ public sealed class DesktopTestHost : IAsyncDisposable
         services.AddSingleton(dialogs);
         services.AddSingleton(files);
         services.AddSingleton(Substitute.For<INotificationService>());
+        overrides?.Invoke(services);
         var provider = services.BuildServiceProvider();
         var init = await provider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
         init.State.Should().Be(DatabaseState.Ready);

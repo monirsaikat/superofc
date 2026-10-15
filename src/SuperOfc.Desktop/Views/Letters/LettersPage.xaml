@@ -94,14 +94,48 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <CheckBox Margin="0,0,0,10" Content="{x:Static res:Strings.Letters_OnePerEmployee}" IsChecked="{Binding OneFilePerEmployee}" />
-              <ui:Button
-                  Margin="0,0,0,16"
-                  Appearance="Primary"
-                  Command="{Binding IssueCommand}"
-                  Content="{x:Static res:Strings.Letters_Issue}"
-                  Icon="{ui:SymbolIcon Print20}"
-                  Visibility="{Binding CanIssue, Converter={StaticResource BoolToVisibility}}" />
+              <StackPanel Style="{StaticResource Field}" Visibility="{Binding IsWordTemplate, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Letters_SaveAs}" />
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton
+                      Margin="0,0,16,0"
+                      Content="{x:Static res:Strings.Letters_OutputPdf}"
+                      GroupName="LetterOutput"
+                      IsChecked="{Binding Output, Converter={StaticResource Equals}, ConverterParameter=Pdf}"
+                      IsEnabled="{Binding WordInstalled}" />
+                  <RadioButton Content="{x:Static res:Strings.Letters_OutputWord}" GroupName="LetterOutput" IsChecked="{Binding Output, Converter={StaticResource Equals}, ConverterParameter=Word}" />
+                </StackPanel>
+                <TextBlock
+                    Margin="0,4,0,0"
+                    Style="{StaticResource Caption}"
+                    Text="{x:Static res:Strings.Letters_PdfNeedsWord}"
+                    TextWrapping="Wrap"
+                    Visibility="{Binding ShowPdfNeedsWord, Converter={StaticResource BoolToVisibility}}" />
+              </StackPanel>
+              <CheckBox
+                  Margin="0,0,0,4"
+                  Content="{Binding OnePerEmployeeText}"
+                  IsChecked="{Binding PerEmployeeChecked}"
+                  IsEnabled="{Binding PerEmployeeEnabled}" />
+              <TextBlock
+                  Margin="0,0,0,4"
+                  Style="{StaticResource Caption}"
+                  Text="{x:Static res:Strings.Letters_WordOnePerPerson}"
+                  TextWrapping="Wrap"
+                  Visibility="{Binding PerEmployeeForced, Converter={StaticResource BoolToVisibility}}" />
+              <StackPanel Margin="0,6,0,16" Orientation="Horizontal" Visibility="{Binding CanIssue, Converter={StaticResource BoolToVisibility}}">
+                <ui:Button
+                    Margin="0,0,8,0"
+                    Appearance="Primary"
+                    Command="{Binding IssueCommand}"
+                    Content="{Binding IssueText}"
+                    Icon="{ui:SymbolIcon Print20}" />
+                <ui:Button
+                    Command="{Binding OpenSampleCommand}"
+                    Content="{x:Static res:Strings.LetterTemplates_OpenSample}"
+                    Icon="{ui:SymbolIcon Open20}"
+                    Visibility="{Binding IsWordTemplate, Converter={StaticResource BoolToVisibility}}" />
+              </StackPanel>
               <TextBlock Margin="0,0,0,6" Style="{StaticResource SectionTitle}" Text="{x:Static res:Strings.LetterTemplates_Preview}" />
               <ui:Card>
                 <StackPanel>
@@ -132,6 +166,18 @@
                 <DataGridTextColumn Width="80" Binding="{Binding EmployeeCode}" Header="{x:Static res:Strings.Employees_Code}" />
                 <DataGridTextColumn Width="*" MinWidth="150" Binding="{Binding EmployeeName}" Header="{x:Static res:Strings.Employees_Name}" />
                 <DataGridTextColumn Width="*" MinWidth="150" Binding="{Binding TemplateName}" Header="{x:Static res:Strings.Letters_Template}" />
+                <DataGridTemplateColumn Width="60">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <TextBlock
+                          VerticalAlignment="Center"
+                          Style="{StaticResource Caption}"
+                          Text="{x:Static res:Strings.LetterTemplates_WordMarker}"
+                          ToolTip="{x:Static res:Strings.Letters_OutputWord}"
+                          Visibility="{Binding HasDocument, Converter={StaticResource BoolToVisibility}}" />
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Width="120" Binding="{Binding IssuedBy}" Header="{x:Static res:Strings.Letters_IssuedBy}" />
                 <DataGridTemplateColumn Width="100">
                   <DataGridTemplateColumn.CellTemplate>

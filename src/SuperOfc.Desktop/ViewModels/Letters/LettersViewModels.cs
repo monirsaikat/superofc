@@ -25,13 +25,103 @@ public static class LetterKinds
     public static string? Plain(string? text) => text?.Replace("**", string.Empty, StringComparison.Ordinal);
 }
 
+/// <summary>Where Word letters are put for editing and samples, and the save dialog for reprints.</summary>
+public static class WordLetterPaths
+{
+    /// <summary>The app's folder under %TEMP%; pages can point elsewhere (tests use their own folder).</summary>
+    public static string DefaultRoot => Path.Combine(Path.GetTempPath(), "SuperOfc");
+
+    private static string Folder(string root, params string[] names)
+    {
+        var folder = Path.Combine([root, .. names]);
+        Directory.CreateDirectory(folder);
+        return folder;
+    }
+
+    /// <summary>
+    /// A stable path per template, so "Edit in Word" and "Use saved changes" use the same file. The folder is the template's id,
+    /// so templates whose names differ only in characters a file name cannot hold never share a file.
+    /// </summary>
+    public static string ForEditing(string root, Guid templateId, string templateName)
+        => Path.Combine(Folder(root, "templates", templateId.ToString("N")), LetterIssue.Safe(templateName) + ".docx");
+
+    /// <summary>A new path each time, so a sample still open in Word does not block the next one.</summary>
+    public static string ForSample(string root, string templateName)
+        => Path.Combine(Folder(root, "samples"), LetterIssue.Safe($"{templateName} {Guid.NewGuid().ToString("N")[..6]}") + ".docx");
+
+    /// <summary>A new empty folder for a short-lived copy; delete it with <see cref="DeleteQuietly"/>.</summary>
+    public static string NewScratchFolder(string root) => Folder(root, "upload", Guid.NewGuid().ToString("N"));
+
+    /// <summary>Reads a file that Word may still have open (Word keeps a write handle on the document it shows).</summary>
+    public static byte[] ReadShared(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var memory = new MemoryStream();
+        stream.CopyTo(memory);
+        return memory.ToArray();
+    }
+
+    /// <summary>Copies a file that may be open in Word to a scratch folder, keeping its file name.</summary>
+    public static string ReadableCopy(string root, string path)
+    {
+        var bytes = ReadShared(path);
+        var copy = Path.Combine(NewScratchFolder(root), Path.GetFileName(path));
+        File.WriteAllBytes(copy, bytes);
+        return copy;
+    }
+
+    /// <summary>The file is locked by another program (sharing or lock violation), for example Word with the file open.</summary>
+    public static bool IsLocked(IOException ex) => ex is not null && (ex.HResult & 0xFFFF) is 32 or 33;
+
+    public static void DeleteQuietly(string folder)
+    {
+        try
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A leftover file in %TEMP% is harmless.
+        }
+    }
+
+    /// <summary>Asks where to save a reprint: Word letters as PDF (needs Word) or .docx, text letters as PDF.</summary>
+    public static string? AskReprintPath(IFileDialogService files, IssuedLetterItem letter, bool wordInstalled)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(letter);
+        var name = $"{letter.TemplateName} {letter.Number.Replace('/', '-')} {letter.EmployeeName}";
+        if (!letter.HasDocument)
+        {
+            return files.SaveFile("PDF (*.pdf)|*.pdf", name + ".pdf");
+        }
+
+        return wordInstalled ? files.SaveFile(Strings.Letters_PdfOrWordFilter, name + ".pdf") : files.SaveFile(Strings.Letters_WordFilter, name + ".docx");
+    }
+}
+
+/// <summary>Asks the page to copy a field to the clipboard; the page sets <see cref="Copied"/> when it worked.</summary>
+public sealed class LetterFieldCopyEventArgs(string token) : EventArgs
+{
+    public string Token { get; } = token;
+
+    public bool Copied { get; set; }
+}
+
 /// <summary>Settings › Letter templates: write letters once with fields; the preview fills them for a sample employee.</summary>
-public sealed partial class LetterTemplatesSettingsViewModel(PageServices services) : EditableViewModel(services)
+public sealed partial class LetterTemplatesSettingsViewModel(PageServices services, IFileDialogService files) : EditableViewModel(services)
 {
     private int _previewVersion;
     private bool _loading;
+    private Guid? _editedTemplateId;
+
+    /// <summary>Last-write time of each edit file when SuperOfc last wrote or used it; a later time means edits not used yet.</summary>
+    private readonly Dictionary<string, DateTime> _editFileTimes = new(StringComparer.OrdinalIgnoreCase);
 
     public override string Title => Strings.Settings_LetterTemplates;
+
+    /// <summary>Where Word files for editing and samples go; tests point it at their own folder.</summary>
+    public string TempFolder { get; set; } = WordLetterPaths.DefaultRoot;
 
     public bool CanManage => Can(Permission.ManageEmployees);
 
@@ -48,6 +138,9 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
 
     /// <summary>Raised to put a field at the caret; the page inserts it into the box that had focus.</summary>
     public event EventHandler<string>? InsertRequested;
+
+    /// <summary>Raised for Word templates instead of <see cref="InsertRequested"/>: the page copies the field to the clipboard.</summary>
+    public event EventHandler<LetterFieldCopyEventArgs>? CopyRequested;
 
     private List<LetterField> _allFields = [];
 
@@ -93,6 +186,26 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
 
     [ObservableProperty]
     public partial bool IsEditing { get; set; }
+
+    /// <summary>The template being edited is a Word file; its letter text is edited in Word.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsText))]
+    public partial bool IsWord { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WordFileText))]
+    public partial string? DocumentFileName { get; set; }
+
+    /// <summary>The file exported by "Edit in Word"; "Use saved changes" uploads it again.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEditedFile))]
+    public partial string? EditedPath { get; set; }
+
+    public bool IsText => !IsWord;
+
+    public bool HasEditedFile => EditedPath is not null;
+
+    public string WordFileText => string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_WordFile, DocumentFileName);
 
     public bool HasSelection => Selected is not null;
 
@@ -148,7 +261,14 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
             IsActive = value.IsActive;
             Subject = value.Subject;
             Body = value.Body;
+            IsWord = value.IsWord;
+            DocumentFileName = value.DocumentFileName;
             _loading = false;
+        }
+
+        if (value.Id != _editedTemplateId || !value.IsWord)
+        {
+            EditedPath = null;
         }
 
         IsEditing = true;
@@ -180,6 +300,9 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
         IsActive = true;
         Subject = string.Empty;
         Body = Strings.LetterTemplates_NewBody;
+        IsWord = false;
+        DocumentFileName = null;
+        EditedPath = null;
         _loading = false;
         IsEditing = true;
         IsDirty = false;
@@ -190,26 +313,328 @@ public sealed partial class LetterTemplatesSettingsViewModel(PageServices servic
     [RelayCommand]
     private void Insert(LetterField? field)
     {
-        if (field is not null)
+        if (field is null)
+        {
+            return;
+        }
+
+        if (IsWord)
+        {
+            var copy = new LetterFieldCopyEventArgs(field.Token);
+            CopyRequested?.Invoke(this, copy);
+            if (copy.Copied)
+            {
+                Toast(string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_Copied, field.Token));
+            }
+            else
+            {
+                Services.Notify.ToastError(string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_CopyFailed, field.Token));
+            }
+        }
+        else
         {
             InsertRequested?.Invoke(this, field.Token);
+        }
+    }
+
+    /// <summary>Uploads a Word file as a new template.</summary>
+    [RelayCommand]
+    private async Task AddWordAsync()
+    {
+        // The new template is selected afterwards, so unsaved edits to this one would be lost.
+        if (!await CanNavigateAwayAsync().ConfigureAwait(true))
+        {
+            return;
+        }
+
+        var path = files.OpenFile(Strings.Letters_WordFilter);
+        if (path is null)
+        {
+            return;
+        }
+
+        var added = await ImportAsync(null, path).ConfigureAwait(true);
+        if (added is { } id)
+        {
+            IsDirty = false;
+            Toast(Strings.LetterTemplates_WordAdded);
+            await LoadAsync(id).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>Saves the template's Word file to a temporary folder and opens it in Word.</summary>
+    [RelayCommand]
+    private async Task EditInWordAsync()
+    {
+        if (EditingId is not { } id || !IsWord || !await SaveChangesFirstAsync().ConfigureAwait(true))
+        {
+            return;
+        }
+
+        string path;
+        try
+        {
+            path = WordLetterPaths.ForEditing(TempFolder, id, Name);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ErrorMessage = ex.Message;
+            return;
+        }
+
+        // Edits saved in Word but not used yet must not be overwritten without asking.
+        if (File.Exists(path) && !IsAsLastWritten(path))
+        {
+            var changed = await DiffersFromStoredAsync(id, path).ConfigureAwait(true);
+            if (changed is null)
+            {
+                return;
+            }
+
+            if (changed.Value)
+            {
+                _editedTemplateId = id;
+                EditedPath = path;
+                if (await Services.Dialogs.ConfirmAsync(Strings.LetterTemplates_UnusedEditsTitle,
+                        string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_UnusedEditsMessage, Name), Strings.LetterTemplates_UseSavedChanges)
+                    .ConfigureAwait(true))
+                {
+                    if (await ImportIntoSelectedAsync(path).ConfigureAwait(true))
+                    {
+                        files.ShellOpen(path);
+                    }
+
+                    return;
+                }
+
+                if (!await Services.Dialogs.ConfirmAsync(Strings.LetterTemplates_StartAgainTitle, Strings.LetterTemplates_StartAgainMessage,
+                        Strings.LetterTemplates_StartAgain, danger: true).ConfigureAwait(true))
+                {
+                    return;
+                }
+            }
+        }
+
+        if ((await SendAsync(new ExportLetterTemplateDocumentCommand(id, path)).ConfigureAwait(true)).IsSuccess)
+        {
+            _editedTemplateId = id;
+            EditedPath = path;
+            RememberWritten(path);
+            files.ShellOpen(path);
+        }
+    }
+
+    /// <summary>Uploads the file edited in Word into this template.</summary>
+    [RelayCommand]
+    private Task UseSavedChangesAsync() => EditedPath is { } path ? ImportIntoSelectedAsync(path) : Task.CompletedTask;
+
+    [RelayCommand]
+    private Task ReplaceWordAsync() => files.OpenFile(Strings.Letters_WordFilter) is { } path ? ImportIntoSelectedAsync(path) : Task.CompletedTask;
+
+    [RelayCommand]
+    private async Task RemoveWordAsync()
+    {
+        if (EditingId is not { } id || !IsWord || !await Services.Dialogs.ConfirmAsync(string.Format(CultureInfo.CurrentCulture, Strings.LetterTemplates_RemoveWordTitle, Name),
+                Strings.LetterTemplates_RemoveWordMessage, Strings.LetterTemplates_RemoveWordConfirm, danger: true).ConfigureAwait(true)
+            || !await SaveChangesFirstAsync().ConfigureAwait(true))
+        {
+            return;
+        }
+
+        if ((await SendAsync(new RemoveLetterTemplateDocumentCommand(id)).ConfigureAwait(true)).IsSuccess)
+        {
+            IsDirty = false;
+            EditedPath = null;
+            await LoadAsync(id).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>Opens the Word file filled for the sample employee.</summary>
+    [RelayCommand]
+    private async Task OpenSampleAsync()
+    {
+        if (EditingId is not { } id || !IsWord || SampleEmployeeId == Guid.Empty || !await SaveChangesFirstAsync().ConfigureAwait(true))
+        {
+            return;
+        }
+
+        string path;
+        try
+        {
+            path = WordLetterPaths.ForSample(TempFolder, Name);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ErrorMessage = ex.Message;
+            return;
+        }
+
+        if ((await SendAsync(new PreviewLetterDocumentCommand(SampleEmployeeId, id, null, null, path)).ConfigureAwait(true)).IsSuccess)
+        {
+            files.ShellOpen(path);
+        }
+    }
+
+    private async Task<bool> ImportIntoSelectedAsync(string path)
+    {
+        if (EditingId is not { } id || !await SaveChangesFirstAsync().ConfigureAwait(true))
+        {
+            return false;
+        }
+
+        if (await ImportAsync(id, path).ConfigureAwait(true) is null)
+        {
+            return false;
+        }
+
+        if (string.Equals(path, EditedPath, StringComparison.OrdinalIgnoreCase))
+        {
+            RememberWritten(path);
+        }
+
+        IsDirty = false;
+        Toast(Strings.LetterTemplates_WordUpdated);
+        await LoadAsync(id).ConfigureAwait(true);
+        return true;
+    }
+
+    /// <summary>
+    /// Uploads a Word file. It is read through a copy, because Word keeps the document it shows open for writing and a plain read
+    /// of it fails; a file Word holds exclusively gets a clear message instead.
+    /// </summary>
+    private async Task<Guid?> ImportAsync(Guid? templateId, string path)
+    {
+        string? scratch = null;
+        var source = path;
+        try
+        {
+            try
+            {
+                source = WordLetterPaths.ReadableCopy(TempFolder, path);
+                scratch = Path.GetDirectoryName(source);
+            }
+            catch (IOException ex) when (WordLetterPaths.IsLocked(ex))
+            {
+                ErrorMessage = Strings.LetterTemplates_CloseInWord;
+                return null;
+            }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+            {
+                // The import reports a missing file in its own words.
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                ErrorMessage = ex.Message;
+                return null;
+            }
+
+            var result = await SendAsync(new ImportLetterTemplateDocumentCommand(templateId, source)).ConfigureAwait(true);
+            return result.IsSuccess ? result.Value : null;
+        }
+        finally
+        {
+            if (scratch is not null)
+            {
+                WordLetterPaths.DeleteQuietly(scratch);
+            }
+        }
+    }
+
+    /// <summary>Saves edits to name, subject, kind and prefix before a Word action reloads the template; false when they are not valid.</summary>
+    private async Task<bool> SaveChangesFirstAsync()
+    {
+        if (!IsDirty)
+        {
+            return true;
+        }
+
+        if (await SaveCoreAsync().ConfigureAwait(true) is not { } id)
+        {
+            return false;
+        }
+
+        Toast(Strings.App_Saved);
+        await LoadAsync(id).ConfigureAwait(true);
+        return true;
+    }
+
+    private void RememberWritten(string path)
+    {
+        try
+        {
+            _editFileTimes[path] = File.GetLastWriteTimeUtc(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _editFileTimes.Remove(path);
+        }
+    }
+
+    private bool IsAsLastWritten(string path)
+        => _editFileTimes.TryGetValue(path, out var written) && File.GetLastWriteTimeUtc(path) == written;
+
+    /// <summary>Whether the edit file holds something other than the stored Word file; null when the stored file could not be read.</summary>
+    private async Task<bool?> DiffersFromStoredAsync(Guid id, string path)
+    {
+        string scratch;
+        try
+        {
+            scratch = WordLetterPaths.NewScratchFolder(TempFolder);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ErrorMessage = ex.Message;
+            return null;
+        }
+
+        try
+        {
+            var stored = Path.Combine(scratch, "stored.docx");
+            if ((await SendAsync(new ExportLetterTemplateDocumentCommand(id, stored)).ConfigureAwait(true)).IsFailure)
+            {
+                return null;
+            }
+
+            try
+            {
+                return !WordLetterPaths.ReadShared(path).AsSpan().SequenceEqual(File.ReadAllBytes(stored));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // The edit file cannot be read; treat it as changed so nothing is overwritten without asking.
+                return true;
+            }
+        }
+        finally
+        {
+            WordLetterPaths.DeleteQuietly(scratch);
         }
     }
 
     [RelayCommand]
     private async Task SaveAsync()
     {
+        if (await SaveCoreAsync().ConfigureAwait(true) is not { } id)
+        {
+            return;
+        }
+
+        Toast(Strings.App_Saved);
+        await LoadAsync(id).ConfigureAwait(true);
+    }
+
+    private async Task<Guid?> SaveCoreAsync()
+    {
         ClearErrors();
         var saved = await SendAsync(new SaveLetterTemplateCommand(EditingId, Name, Kind, Subject, Body, NumberPrefix, IsActive), showErrors: false).ConfigureAwait(true);
         if (saved.IsFailure)
         {
             ShowErrors(saved.Errors);
-            return;
+            return null;
         }
 
         IsDirty = false;
-        Toast(Strings.App_Saved);
-        await LoadAsync(saved.Value).ConfigureAwait(true);
+        return saved.Value;
     }
 
     [RelayCommand]
@@ -324,6 +749,9 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
 
     public override string Title => Strings.Letters_Title;
 
+    /// <summary>Where sample Word files go; tests point it at their own folder.</summary>
+    public string TempFolder { get; set; } = WordLetterPaths.DefaultRoot;
+
     public bool CanIssue => Can(Permission.ManageEmployees);
 
     public ObservableCollection<LetterTemplateDto> Templates { get; } = [];
@@ -337,8 +765,50 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
     public ObservableCollection<IssuedLetterItem> Issued { get; } = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasInputs))]
+    [NotifyPropertyChangedFor(nameof(HasInputs), nameof(IsWordTemplate), nameof(PerEmployeeForced), nameof(PerEmployeeEnabled), nameof(PerEmployeeChecked),
+        nameof(OnePerEmployeeText), nameof(IssueText), nameof(ShowPdfNeedsWord))]
     public partial LetterTemplateDto? Template { get; set; }
+
+    /// <summary>Microsoft Word is installed, so Word templates can be saved as PDF.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowPdfNeedsWord))]
+    public partial bool WordInstalled { get; set; }
+
+    /// <summary>How a Word template's letters are saved; text templates are always PDF.</summary>
+    [ObservableProperty]
+    public partial LetterOutput Output { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PerEmployeeForced), nameof(PerEmployeeEnabled), nameof(PerEmployeeChecked))]
+    public partial int SelectedCount { get; set; }
+
+    public bool IsWordTemplate => Template?.IsWord == true;
+
+    public bool ShowPdfNeedsWord => IsWordTemplate && !WordInstalled;
+
+    /// <summary>Word files are never merged: several people always get one file each.</summary>
+    public bool PerEmployeeForced => IsWordTemplate && SelectedCount > 1;
+
+    public bool PerEmployeeEnabled => !PerEmployeeForced;
+
+    /// <summary>The tick box: checked when forced, otherwise <see cref="OneFilePerEmployee"/>.</summary>
+    public bool PerEmployeeChecked
+    {
+        get => PerEmployeeForced || OneFilePerEmployee;
+        set
+        {
+            if (!PerEmployeeForced)
+            {
+                OneFilePerEmployee = value;
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
+    public string OnePerEmployeeText => IsWordTemplate ? Strings.Letters_OnePerEmployeeFile : Strings.Letters_OnePerEmployee;
+
+    public string IssueText => IsWordTemplate ? Strings.Letters_IssueWord : Strings.Letters_Issue;
 
     [ObservableProperty]
     public partial Guid? DepartmentId { get; set; } = Guid.Empty;
@@ -382,6 +852,9 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
     public override async Task OnNavigatedToAsync(object? parameter)
     {
         Date = clock.TodayIn(company.TimeZone).ToDateTime(TimeOnly.MinValue);
+        var options = await SendAsync(new GetLetterOutputOptionsQuery(), showErrors: false).ConfigureAwait(true);
+        WordInstalled = options.IsSuccess && options.Value.WordInstalled;
+        ChooseOutput();
         var templates = await SendAsync(new GetLetterTemplatesQuery(ActiveOnly: true)).ConfigureAwait(true);
         Templates.Clear();
         foreach (var t in templates.IsSuccess ? templates.Value : [])
@@ -445,7 +918,25 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
         }
 
         OnPropertyChanged(nameof(HasInputs));
+        ChooseOutput();
         _ = RefreshPreviewAsync();
+    }
+
+    partial void OnOneFilePerEmployeeChanged(bool value) => OnPropertyChanged(nameof(PerEmployeeChecked));
+
+    partial void OnWordInstalledChanged(bool value) => ChooseOutput();
+
+    /// <summary>Text templates are PDF; Word templates are PDF when Word is installed, otherwise Word files.</summary>
+    private void ChooseOutput()
+    {
+        if (!IsWordTemplate)
+        {
+            Output = LetterOutput.Pdf;
+        }
+        else if (!WordInstalled)
+        {
+            Output = LetterOutput.Word;
+        }
     }
 
     partial void OnDepartmentIdChanged(Guid? value) => Filter();
@@ -498,16 +989,21 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
             return;
         }
 
+        var output = template.IsWord ? Output : LetterOutput.Pdf;
+        var perEmployee = OneFilePerEmployee || (template.IsWord && ids.Count > 1);
+        var (filter, extension) = output == LetterOutput.Word ? (Strings.Letters_WordFilter, ".docx") : ("PDF (*.pdf)|*.pdf", ".pdf");
         string? path;
-        if (OneFilePerEmployee)
+        if (perEmployee)
         {
             var folder = files.PickFolder(Strings.Letters_PickFolder);
-            path = folder is null ? null : Path.Combine(folder, $"{template.Name} {date:yyyy-MM-dd}");
+
+            // Word letters go straight into the chosen folder; text letters into a folder named after the letter and date.
+            path = folder is null || template.IsWord ? folder : Path.Combine(folder, $"{template.Name} {date:yyyy-MM-dd}");
         }
         else
         {
             var single = ids.Count == 1 ? _people.First(p => p.IsSelected).Employee : null;
-            path = files.SaveFile("PDF (*.pdf)|*.pdf", single is null ? $"{template.Name} {date:yyyy-MM-dd}.pdf" : $"{template.Name} {single.Code} {single.FullName}.pdf");
+            path = files.SaveFile(filter, single is null ? $"{template.Name} {date:yyyy-MM-dd}{extension}" : $"{template.Name} {single.Code} {single.FullName}{extension}");
         }
 
         if (path is null)
@@ -515,7 +1011,7 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
             return;
         }
 
-        var result = await SendAsync(new IssueLettersCommand(template.Id, ids, DateOnly.FromDateTime(date), InputValues(), path, OneFilePerEmployee), showErrors: false)
+        var result = await SendAsync(new IssueLettersCommand(template.Id, ids, DateOnly.FromDateTime(date), InputValues(), path, perEmployee, output), showErrors: false)
             .ConfigureAwait(true);
         if (result.IsFailure)
         {
@@ -525,7 +1021,7 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
 
         var r = result.Value;
         Toast(string.Format(CultureInfo.CurrentCulture, Strings.Letters_Issued, r.Count, r.Numbers[0], r.Numbers[^1]));
-        if (OneFilePerEmployee)
+        if (perEmployee)
         {
             files.OpenFolder(path);
         }
@@ -537,6 +1033,37 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
         await RefreshAsync().ConfigureAwait(true);
     }
 
+    /// <summary>Opens the Word template filled for the first ticked person (nothing is numbered or kept).</summary>
+    [RelayCommand]
+    private async Task OpenSampleAsync()
+    {
+        ErrorMessage = null;
+        var first = _people.FirstOrDefault(p => p.IsSelected);
+        if (Template is not { IsWord: true } template || first is null || Date is not { } date)
+        {
+            ErrorMessage = Strings.Letters_ChooseTemplateAndPeople;
+            return;
+        }
+
+        string path;
+        try
+        {
+            path = WordLetterPaths.ForSample(TempFolder, template.Name);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ErrorMessage = ex.Message;
+            return;
+        }
+
+        var result = await SendAsync(new PreviewLetterDocumentCommand(first.Employee.Id, template.Id, DateOnly.FromDateTime(date), InputValues(), path))
+            .ConfigureAwait(true);
+        if (result.IsSuccess)
+        {
+            files.ShellOpen(path);
+        }
+    }
+
     [RelayCommand]
     private async Task ReprintAsync(IssuedLetterItem? letter)
     {
@@ -546,7 +1073,7 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
             return;
         }
 
-        var path = files.SaveFile("PDF (*.pdf)|*.pdf", $"{letter.TemplateName} {letter.Number.Replace('/', '-')} {letter.EmployeeName}.pdf");
+        var path = WordLetterPaths.AskReprintPath(files, letter, WordInstalled);
         if (path is not null && (await SendAsync(new ReprintLettersCommand([letter.Id], path)).ConfigureAwait(true)).IsSuccess)
         {
             files.ShellOpen(path);
@@ -599,6 +1126,7 @@ public sealed partial class LettersViewModel(PageServices services, IFileDialogS
     private void UpdateSelection()
     {
         var count = _people.Count(p => p.IsSelected);
+        SelectedCount = count;
         SelectionText = string.Format(CultureInfo.CurrentCulture, Strings.Letters_Selected, count);
         _ = RefreshPreviewAsync();
     }
@@ -656,7 +1184,14 @@ public sealed partial class EmployeeLettersTabViewModel(PageServices services, I
             return;
         }
 
-        var path = files.SaveFile("PDF (*.pdf)|*.pdf", $"{letter.TemplateName} {letter.Number.Replace('/', '-')} {letter.EmployeeName}.pdf");
+        var wordInstalled = false;
+        if (letter.HasDocument)
+        {
+            var options = await SendAsync(new GetLetterOutputOptionsQuery(), showErrors: false).ConfigureAwait(true);
+            wordInstalled = options.IsSuccess && options.Value.WordInstalled;
+        }
+
+        var path = WordLetterPaths.AskReprintPath(files, letter, wordInstalled);
         if (path is not null && (await SendAsync(new ReprintLettersCommand([letter.Id], path)).ConfigureAwait(true)).IsSuccess)
         {
             files.ShellOpen(path);

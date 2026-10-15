@@ -1,0 +1,40 @@
+# Word letter templates: father's name and designation responsibilities
+Employee_FatherName=Father's name
+Org_ResponsibilitiesHint=For designations: responsibilities, one per line. Letters print them with {Employee.Responsibilities}.
+
+# Word letter templates: settings
+LetterTemplates_AddWord=Add Word template
+LetterTemplates_WordMarker=Word
+LetterTemplates_WordFile=Word file: {0}
+LetterTemplates_EditInWord=Edit in Word
+LetterTemplates_UseSavedChanges=Use saved changes
+LetterTemplates_ReplaceWord=Replace Word file
+LetterTemplates_RemoveWord=Remove Word file
+LetterTemplates_OpenSample=Open sample
+LetterTemplates_WordHint=This letter is a Word file, so it prints exactly as laid out in Word. Type fields such as {Employee.Name} directly in Word. Double-click a field in the list to copy it, then paste it into Word.
+LetterTemplates_EditInWordHint=Save the file in Word, then click Use saved changes.
+LetterTemplates_WordFieldsHint=Double-click a field to copy it, then paste it into the Word file or the subject.
+LetterTemplates_Copied=Copied {0}
+LetterTemplates_CopyFailed=Could not copy {0}. Another program is using the clipboard; try again.
+LetterTemplates_CloseInWord=Save and close the file in Word first.
+LetterTemplates_UnusedEditsTitle=Use the changes saved in Word?
+LetterTemplates_UnusedEditsMessage=The Word file of {0} was saved in Word, but those changes are not used yet. Use them now, or cancel to choose whether to start again from the stored file.
+LetterTemplates_StartAgainTitle=Start again from the stored file?
+LetterTemplates_StartAgainMessage=The changes saved in Word will be lost. Cancel to keep them; you can still click Use saved changes.
+LetterTemplates_StartAgain=Start again
+LetterTemplates_WordUpdated=Word file updated
+LetterTemplates_WordAdded=Word template added
+LetterTemplates_RemoveWordTitle=Remove the Word file from {0}?
+LetterTemplates_RemoveWordMessage=The template keeps the letter's text and becomes a plain text letter. Letters already issued keep their Word files.
+LetterTemplates_RemoveWordConfirm=Remove
+Letters_WordFilter=Word document (*.docx)|*.docx
+Letters_PdfOrWordFilter=PDF (*.pdf)|*.pdf|Word document (*.docx)|*.docx
+
+# Word letter templates: issuing
+Letters_SaveAs=Save as
+Letters_OutputPdf=PDF (made by Word)
+Letters_OutputWord=Word document
+Letters_PdfNeedsWord=PDF needs Microsoft Word on this PC. Letters are saved as Word documents.
+Letters_OnePerEmployeeFile=Save a separate file for each person
+Letters_WordOnePerPerson=Word letters are saved one file per person
+Letters_IssueWord=Issue and save

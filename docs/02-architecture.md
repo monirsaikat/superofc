@@ -270,7 +270,30 @@ Install: %LocalAppData%\SuperOfc\  (Velopack default)
 - Issued letters keep the rendered text. A letter is a legal record: a reprint must match the signed copy,
   so it never re-renders from the current data.
 - One PDF renderer (`ILetterPdfService`) draws the letterhead from company settings, the reference number
-  and date, the subject and paragraphs. Word output, signatures and letter approval are open (Q51–Q54).
+  and date, the subject and paragraphs for text templates. Word templates and Word output are covered by ADR-24;
+  signatures and letter approval are open (Q52, Q54).
+
+### ADR-24 — Word files as letter templates; Word makes the PDF (implemented after Phase 8)
+
+- The company's own .docx is the template, so printed letters match its existing letters exactly (fonts such as
+  Monotype Corsiva, superscript ordinals, tables, bullets, letterhead space). Rebuilding that layout in QuestPDF could
+  never match it.
+- Filling uses the Open XML SDK in Infrastructure (`WordLetterService`). Per paragraph it joins the text of all runs,
+  runs the same `LetterText.Plan` as text templates, and writes each value into the run where the field starts, so the
+  field's formatting is kept and nothing else changes. Headers, footers, footnotes, tables and both copies of text boxes
+  are filled. A multi-line value that is a whole paragraph repeats the paragraph, so bullets repeat.
+- Fields take formats (`{Employee.JoinDate:d MMMM yyyy}`, `:ord`, `{Salary.Gross:n0}`, `:words`, `:cap`); every field
+  has a type (text, lines, date, money) and unknown formats are rejected when the template is saved or uploaded.
+- PDFs are made by Microsoft Word through late-bound COM on one dedicated STA thread (`WordPdfConverter`): macros
+  disabled, no alerts, read-only open, a per-document timeout and cleanup of the Word process. Without Word, letters are
+  saved as .docx.
+- Uploads are checked: .docx only, at most 10 MB, no macros, no encryption, no external links, included files or DDE.
+- The template bytes are stored in the database (`LetterTemplate.Document`), and so is each issued letter's filled file
+  (`IssuedLetterDocument`), so backups include them and a reprint is the identical file. `Body` holds the document text,
+  so field checks, typed inputs, the salary permission and search work the same for both kinds of template.
+- A fidelity check (`WordTemplateFidelityTests` with `SUPEROFC_WORD_TESTS=1`, then
+  `tools/dev/letters/compare_fidelity.py`) fills the converted templates with the original letters' values and compares
+  Word's PDFs of both pixel by pixel.
 
 ## Seams for the future (build the interface now, the implementation later)
 

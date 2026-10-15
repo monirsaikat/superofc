@@ -74,6 +74,10 @@ public sealed partial class EmployeeDetailViewModel(PageServices services, IFile
     [ObservableProperty]
     public partial string? Address { get; set; }
 
+    /// <summary>Printed in letters such as "Son of ...".</summary>
+    [ObservableProperty]
+    public partial string? FatherName { get; set; }
+
     [ObservableProperty]
     public partial string? NationalId { get; set; }
 
@@ -182,7 +186,7 @@ public sealed partial class EmployeeDetailViewModel(PageServices services, IFile
         var input = new EmployeeInput(
             Code, FullName, Gender, DateOfBirth is null ? null : DateOnly.FromDateTime(DateOfBirth.Value), Phone, Email, Address, NationalId,
             EmergencyContact, DateOnly.FromDateTime(JoinDate.Value), NullIfEmpty(DepartmentId), NullIfEmpty(DesignationId),
-            NullIfEmpty(LocationId), NullIfEmpty(GradeId), PaymentMode, BankName, BankBranch, BankAccount, TaxIdentifier, IsOvertimeEligible, null);
+            NullIfEmpty(LocationId), NullIfEmpty(GradeId), PaymentMode, BankName, BankBranch, BankAccount, TaxIdentifier, IsOvertimeEligible, null, FatherName);
 
         if (EmployeeId is { } id)
         {
@@ -395,6 +399,7 @@ public sealed partial class EmployeeDetailViewModel(PageServices services, IFile
             Phone = e.Phone;
             Email = e.Email;
             Address = e.Address;
+            FatherName = e.FatherName;
             NationalId = e.NationalId;
             EmergencyContact = e.EmergencyContact;
             JoinDate = e.JoinDate.ToDateTime(TimeOnly.MinValue);

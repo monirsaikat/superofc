@@ -20,6 +20,9 @@ public static class EmployeeImportColumns
     public const string Phone = "Phone";
     public const string Email = "Email";
     public const string Address = "Address";
+
+    /// <summary>Optional; printed in letters such as "Son of ...".</summary>
+    public const string FatherName = "Father's name";
     public const string NationalId = "National ID";
     public const string JoinDate = "Join date";
     public const string Confirmed = "Confirmed";
@@ -36,7 +39,7 @@ public static class EmployeeImportColumns
 
     public static IReadOnlyList<string> All { get; } =
     [
-        Code, FullName, Gender, DateOfBirth, Phone, Email, Address, NationalId, JoinDate, Confirmed, Department, Designation,
+        Code, FullName, Gender, DateOfBirth, Phone, Email, Address, FatherName, NationalId, JoinDate, Confirmed, Department, Designation,
         Location, Grade, PaymentMode, BankName, BankBranch, BankAccount, TaxId, Overtime,
     ];
 
@@ -175,7 +178,7 @@ internal sealed class EmployeeImportParser(IAppDbContext db, ICurrentUser user, 
                 Get(EmployeeImportColumns.Address), Get(EmployeeImportColumns.NationalId), null, joinDate,
                 ids[MasterDataKind.Department], ids[MasterDataKind.Designation], ids[MasterDataKind.Location], ids[MasterDataKind.Grade],
                 paymentMode, Get(EmployeeImportColumns.BankName), Get(EmployeeImportColumns.BankBranch), Get(EmployeeImportColumns.BankAccount),
-                Get(EmployeeImportColumns.TaxId), overtime, null);
+                Get(EmployeeImportColumns.TaxId), overtime, null, Get(EmployeeImportColumns.FatherName));
             if (joinDate != DateOnly.MinValue)
             {
                 errors.AddRange((await validator.ValidateAsync(input, ct).ConfigureAwait(false)).Errors.Select(e => e.ErrorMessage));
@@ -339,7 +342,7 @@ public sealed class WriteEmployeeImportTemplateHandler(ISpreadsheetService sheet
     {
         object?[] example =
         [
-            "E0001", "Rahim Uddin", "Male", "1990-05-14", "01700000000", "rahim@example.com", "Dhaka", "1234567890", "2024-01-01", "Yes",
+            "E0001", "Rahim Uddin", "Male", "1990-05-14", "01700000000", "rahim@example.com", "Dhaka", "Karim Uddin", "1234567890", "2024-01-01", "Yes",
             "Accounts", "Officer", "Head office", string.Empty, "Bank", "Example Bank", "Gulshan", "0011223344", string.Empty, "Yes",
         ];
         sheets.Write(request.FilePath, [new SheetData("Employees", EmployeeImportColumns.All, [example])]);
@@ -366,10 +369,15 @@ public sealed class ExportEmployeesHandler(IAppDbContext db, ICurrentUser user, 
             }
         }
 
+        // The list does not carry the father's name; one query fetches it for the whole company.
+        var fathers = (await db.Employees.AsNoTracking().Where(e => e.CompanyId == user.CompanyId && e.FatherName != null)
+                .Select(e => new { e.Id, e.FatherName }).ToListAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(e => e.Id, e => e.FatherName);
         sheets.Write(request.FilePath, [new SheetData(
             "Employees",
-            ["Code", "Full name", "Department", "Designation", "Location", "Phone", "Join date", "Status"],
-            all.Select(e => (IReadOnlyList<object?>)[e.Code, e.FullName, e.Department, e.Designation, e.Location, e.Phone, e.JoinDate, e.Status.ToString()]))]);
+            ["Code", "Full name", EmployeeImportColumns.FatherName, "Department", "Designation", "Location", "Phone", "Join date", "Status"],
+            all.Select(e => (IReadOnlyList<object?>)[e.Code, e.FullName, fathers.GetValueOrDefault(e.Id), e.Department, e.Designation, e.Location, e.Phone, e.JoinDate,
+                e.Status.ToString()]))]);
         return all.Count;
     }
 }

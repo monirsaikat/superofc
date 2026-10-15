@@ -15,6 +15,7 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     <PackageReference Include="QuestPDF" />
     <PackageReference Include="ClosedXML" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="Velopack" />
   </ItemGroup>
   <ItemGroup>

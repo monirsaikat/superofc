@@ -802,6 +802,10 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("FatherName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -1251,6 +1255,9 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("HasDocument")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IncludesSalary")
                         .HasColumnType("INTEGER");
 
@@ -1310,6 +1317,45 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                     b.ToTable("IssuedLetter", (string)null);
                 });
 
+            modelBuilder.Entity("SuperOfc.Domain.Letters.IssuedLetterDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("IssuedLetterId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IssuedLetterId")
+                        .IsUnique();
+
+                    b.ToTable("IssuedLetterDocument", (string)null);
+                });
+
             modelBuilder.Entity("SuperOfc.Domain.Letters.LetterTemplate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1332,6 +1378,17 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Document")
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("DocumentFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DocumentSha256")
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -3436,6 +3493,15 @@ namespace SuperOfc.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SuperOfc.Domain.Letters.IssuedLetterDocument", b =>
+                {
+                    b.HasOne("SuperOfc.Domain.Letters.IssuedLetter", null)
+                        .WithOne()
+                        .HasForeignKey("SuperOfc.Domain.Letters.IssuedLetterDocument", "IssuedLetterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SuperOfc.Domain.Loans.Loan", b =>

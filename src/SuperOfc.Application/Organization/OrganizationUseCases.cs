@@ -94,6 +94,7 @@ public sealed class SaveMasterDataValidator : AbstractValidator<SaveMasterDataCo
     {
         RuleFor(x => x.Name).NotEmpty().WithMessage("Enter a name.").MaximumLength(100);
         RuleFor(x => x.Code).MaximumLength(20);
+        RuleFor(x => x.Description).MaximumLength(500);
         RuleFor(x => x.Kind).IsInEnum();
     }
 }

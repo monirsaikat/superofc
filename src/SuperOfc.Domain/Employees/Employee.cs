@@ -43,6 +43,9 @@ public sealed class Employee : CompanyEntity, ISoftDeletable
 
     public string? Address { get; set; }
 
+    /// <summary>Father's name, printed in letters such as "Son of ...".</summary>
+    public string? FatherName { get; set; }
+
     public string? NationalId { get; set; }
 
     public string? EmergencyContact { get; set; }

@@ -131,7 +131,8 @@ public sealed record EmployeeDetail(
     string? TaxIdentifier,
     bool IsOvertimeEligible,
     IReadOnlyDictionary<string, string> CustomFields,
-    long RowVersion);
+    long RowVersion,
+    string? FatherName = null);
 
 public sealed record GetEmployeeQuery(Guid Id) : IQuery<EmployeeDetail>;
 
@@ -151,7 +152,7 @@ public sealed class GetEmployeeHandler(IAppDbContext db, ICurrentUser user) : IR
             e.Id, e.Code, e.FullName, e.Gender, e.DateOfBirth, e.Phone, e.Email, e.Address, e.NationalId, e.EmergencyContact,
             e.JoinDate, e.ConfirmationDate, e.ExitDate, e.ExitReason, e.Status, e.DepartmentId, e.DesignationId, e.LocationId, e.GradeId,
             e.PhotoPath, e.PaymentMode, e.BankName, e.BankBranch, canSeeFinance ? e.BankAccount : Mask(e.BankAccount),
-            canSeeFinance ? e.TaxIdentifier : Mask(e.TaxIdentifier), e.IsOvertimeEligible, CustomFieldJson.Parse(e.CustomFieldsJson), e.RowVersion);
+            canSeeFinance ? e.TaxIdentifier : Mask(e.TaxIdentifier), e.IsOvertimeEligible, CustomFieldJson.Parse(e.CustomFieldsJson), e.RowVersion, e.FatherName);
     }
 
     private static string? Mask(string? value)
@@ -206,7 +207,8 @@ public sealed record EmployeeInput(
     string? BankAccount,
     string? TaxIdentifier,
     bool IsOvertimeEligible,
-    IReadOnlyDictionary<string, string>? CustomFields);
+    IReadOnlyDictionary<string, string>? CustomFields,
+    string? FatherName = null);
 
 public sealed class EmployeeInputValidator : AbstractValidator<EmployeeInput>
 {
@@ -217,6 +219,7 @@ public sealed class EmployeeInputValidator : AbstractValidator<EmployeeInput>
         RuleFor(x => x.FullName).NotEmpty().WithMessage("Enter the employee's name.").MaximumLength(150);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email)).WithMessage("Enter a valid email address.");
         RuleFor(x => x.Phone).MaximumLength(30);
+        RuleFor(x => x.FatherName).MaximumLength(200);
         RuleFor(x => x.DateOfBirth).Must((x, dob) => dob is null || dob < x.JoinDate).WithMessage("Date of birth must be before the join date.");
         RuleFor(x => x.BankAccount).NotEmpty().When(x => x.PaymentMode == PaymentMode.Bank && !string.IsNullOrWhiteSpace(x.BankName))
             .WithMessage("Enter the bank account number.");
@@ -332,6 +335,7 @@ internal static class EmployeeMapping
         e.Phone = Clean(i.Phone);
         e.Email = Clean(i.Email);
         e.Address = Clean(i.Address);
+        e.FatherName = Clean(i.FatherName);
         e.NationalId = Clean(i.NationalId);
         e.EmergencyContact = Clean(i.EmergencyContact);
         e.JoinDate = i.JoinDate;

@@ -302,6 +302,7 @@
   <data name="Employee_Emergency" xml:space="preserve"><value>Emergency contact</value></data>
   <data name="Employee_Exit" xml:space="preserve"><value>Left on</value></data>
   <data name="Employee_ExitReason" xml:space="preserve"><value>Reason for leaving</value></data>
+  <data name="Employee_FatherName" xml:space="preserve"><value>Father's name</value></data>
   <data name="Employee_FullName" xml:space="preserve"><value>Full name</value></data>
   <data name="Employee_Gender" xml:space="preserve"><value>Gender</value></data>
   <data name="Employee_Grade" xml:space="preserve"><value>Grade</value></data>
@@ -472,24 +473,39 @@
   <data name="Letters_Issued" xml:space="preserve"><value>{0} letters issued ({1} to {2})</value></data>
   <data name="Letters_IssuedBy" xml:space="preserve"><value>Issued by</value></data>
   <data name="Letters_IssueTab" xml:space="preserve"><value>Issue</value></data>
+  <data name="Letters_IssueWord" xml:space="preserve"><value>Issue and save</value></data>
   <data name="Letters_New" xml:space="preserve"><value>New letter</value></data>
   <data name="Letters_Number" xml:space="preserve"><value>Number</value></data>
   <data name="Letters_OnePerEmployee" xml:space="preserve"><value>Save a separate PDF for each person</value></data>
+  <data name="Letters_OnePerEmployeeFile" xml:space="preserve"><value>Save a separate file for each person</value></data>
+  <data name="Letters_OutputPdf" xml:space="preserve"><value>PDF (made by Word)</value></data>
+  <data name="Letters_OutputWord" xml:space="preserve"><value>Word document</value></data>
+  <data name="Letters_PdfNeedsWord" xml:space="preserve"><value>PDF needs Microsoft Word on this PC. Letters are saved as Word documents.</value></data>
+  <data name="Letters_PdfOrWordFilter" xml:space="preserve"><value>PDF (*.pdf)|*.pdf|Word document (*.docx)|*.docx</value></data>
   <data name="Letters_PickFolder" xml:space="preserve"><value>Choose a folder for the letters</value></data>
   <data name="Letters_RegisterEmpty" xml:space="preserve"><value>No letters issued yet.</value></data>
   <data name="Letters_RegisterSearch" xml:space="preserve"><value>Search number, name or template</value></data>
   <data name="Letters_RegisterTab" xml:space="preserve"><value>Issued letters</value></data>
   <data name="Letters_Reprint" xml:space="preserve"><value>Reprint</value></data>
+  <data name="Letters_SaveAs" xml:space="preserve"><value>Save as</value></data>
   <data name="Letters_Selected" xml:space="preserve"><value>{0} selected</value></data>
   <data name="Letters_Template" xml:space="preserve"><value>Template</value></data>
   <data name="Letters_Title" xml:space="preserve"><value>Letters</value></data>
   <data name="Letters_What" xml:space="preserve"><value>Letter</value></data>
   <data name="Letters_Who" xml:space="preserve"><value>Who</value></data>
+  <data name="Letters_WordFilter" xml:space="preserve"><value>Word document (*.docx)|*.docx</value></data>
+  <data name="Letters_WordOnePerPerson" xml:space="preserve"><value>Word letters are saved one file per person</value></data>
   <data name="LetterTemplates_Active" xml:space="preserve"><value>Show this template when issuing letters</value></data>
   <data name="LetterTemplates_AddStandard" xml:space="preserve"><value>Add standard letters</value></data>
+  <data name="LetterTemplates_AddWord" xml:space="preserve"><value>Add Word template</value></data>
   <data name="LetterTemplates_Body" xml:space="preserve"><value>Letter</value></data>
+  <data name="LetterTemplates_CloseInWord" xml:space="preserve"><value>Save and close the file in Word first.</value></data>
+  <data name="LetterTemplates_Copied" xml:space="preserve"><value>Copied {0}</value></data>
+  <data name="LetterTemplates_CopyFailed" xml:space="preserve"><value>Could not copy {0}. Another program is using the clipboard; try again.</value></data>
   <data name="LetterTemplates_DeleteMessage" xml:space="preserve"><value>Letters already issued from this template are kept.</value></data>
   <data name="LetterTemplates_DeleteTitle" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="LetterTemplates_EditInWord" xml:space="preserve"><value>Edit in Word</value></data>
+  <data name="LetterTemplates_EditInWordHint" xml:space="preserve"><value>Save the file in Word, then click Use saved changes.</value></data>
   <data name="LetterTemplates_Fields" xml:space="preserve"><value>Fields</value></data>
   <data name="LetterTemplates_FieldsHint" xml:space="preserve"><value>Double-click a field to put it where the cursor is.</value></data>
   <data name="LetterTemplates_FormatHint" xml:space="preserve"><value>Leave an empty line between paragraphs. Put **two stars** around words to make them bold. {Input.Reason} asks for text when the letter is issued. Write {{ or }} for a literal brace.</value></data>
@@ -503,11 +519,29 @@ Write the letter here.
 Yours sincerely,
 
 For {Company.Name}</value></data>
+  <data name="LetterTemplates_OpenSample" xml:space="preserve"><value>Open sample</value></data>
   <data name="LetterTemplates_Prefix" xml:space="preserve"><value>Number prefix</value></data>
   <data name="LetterTemplates_Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="LetterTemplates_RemoveWord" xml:space="preserve"><value>Remove Word file</value></data>
+  <data name="LetterTemplates_RemoveWordConfirm" xml:space="preserve"><value>Remove</value></data>
+  <data name="LetterTemplates_RemoveWordMessage" xml:space="preserve"><value>The template keeps the letter's text and becomes a plain text letter. Letters already issued keep their Word files.</value></data>
+  <data name="LetterTemplates_RemoveWordTitle" xml:space="preserve"><value>Remove the Word file from {0}?</value></data>
+  <data name="LetterTemplates_ReplaceWord" xml:space="preserve"><value>Replace Word file</value></data>
   <data name="LetterTemplates_SampleEmployee" xml:space="preserve"><value>Employee shown in the preview</value></data>
   <data name="LetterTemplates_StandardAdded" xml:space="preserve"><value>{0} standard templates added</value></data>
+  <data name="LetterTemplates_StartAgain" xml:space="preserve"><value>Start again</value></data>
+  <data name="LetterTemplates_StartAgainMessage" xml:space="preserve"><value>The changes saved in Word will be lost. Cancel to keep them; you can still click Use saved changes.</value></data>
+  <data name="LetterTemplates_StartAgainTitle" xml:space="preserve"><value>Start again from the stored file?</value></data>
   <data name="LetterTemplates_Subject" xml:space="preserve"><value>Subject</value></data>
+  <data name="LetterTemplates_UnusedEditsMessage" xml:space="preserve"><value>The Word file of {0} was saved in Word, but those changes are not used yet. Use them now, or cancel to choose whether to start again from the stored file.</value></data>
+  <data name="LetterTemplates_UnusedEditsTitle" xml:space="preserve"><value>Use the changes saved in Word?</value></data>
+  <data name="LetterTemplates_UseSavedChanges" xml:space="preserve"><value>Use saved changes</value></data>
+  <data name="LetterTemplates_WordAdded" xml:space="preserve"><value>Word template added</value></data>
+  <data name="LetterTemplates_WordFieldsHint" xml:space="preserve"><value>Double-click a field to copy it, then paste it into the Word file or the subject.</value></data>
+  <data name="LetterTemplates_WordFile" xml:space="preserve"><value>Word file: {0}</value></data>
+  <data name="LetterTemplates_WordHint" xml:space="preserve"><value>This letter is a Word file, so it prints exactly as laid out in Word. Type fields such as {Employee.Name} directly in Word. Double-click a field in the list to copy it, then paste it into Word.</value></data>
+  <data name="LetterTemplates_WordMarker" xml:space="preserve"><value>Word</value></data>
+  <data name="LetterTemplates_WordUpdated" xml:space="preserve"><value>Word file updated</value></data>
   <data name="LoanDetail_Approve" xml:space="preserve"><value>Approve</value></data>
   <data name="LoanDetail_Approved" xml:space="preserve"><value>Loan approved. Pay it out to start the deductions.</value></data>
   <data name="LoanDetail_Balance" xml:space="preserve"><value>Balance</value></data>
@@ -613,6 +647,7 @@ For {Company.Name}</value></data>
   <data name="Org_Locations" xml:space="preserve"><value>Locations</value></data>
   <data name="Org_Name" xml:space="preserve"><value>Name</value></data>
   <data name="Org_New" xml:space="preserve"><value>New item</value></data>
+  <data name="Org_ResponsibilitiesHint" xml:space="preserve"><value>For designations: responsibilities, one per line. Letters print them with {Employee.Responsibilities}.</value></data>
   <data name="Org_SortOrder" xml:space="preserve"><value>Sort order</value></data>
   <data name="Pay_Bank" xml:space="preserve"><value>Bank</value></data>
   <data name="Pay_Cash" xml:space="preserve"><value>Cash</value></data>

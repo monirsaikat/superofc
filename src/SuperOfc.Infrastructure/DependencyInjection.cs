@@ -36,6 +36,8 @@ public static class DependencyInjection
         services.AddSingleton<Application.Tax.ITaxStatementPdfService, Reporting.TaxStatementPdfService>();
         services.AddSingleton<Application.Reports.IReportPdfService, Reporting.ReportPdfService>();
         services.AddSingleton<Application.Letters.ILetterPdfService, Reporting.LetterPdfService>();
+        services.AddSingleton<Application.Letters.IWordLetterService, Reporting.WordLetterService>();
+        services.AddSingleton<Application.Letters.IWordPdfConverter, Reporting.WordPdfConverter>();
         services.AddScoped<Application.Backups.IDataExportService, Services.DataExportService>();
         services.AddScoped<Application.Backups.IDiagnosticsService, Services.DiagnosticsService>();
         services.AddSingleton<Application.Tax.ITaxPackSource, Seed.TaxPackSource>();

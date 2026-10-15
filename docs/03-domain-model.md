@@ -278,6 +278,10 @@ to `Open`). Finalized payslips are immutable; corrections go through a new run.
 - An **issued letter** stores the rendered subject and body (a snapshot). Reprints show exactly what was
   signed, even after the template, salary or name changes. Issuing is audited (`Letter.Issued`).
 - Letters for many employees go into one PDF (one letter per page) or one PDF per employee.
+- Fields may carry a format: `{Employee.JoinDate:d MMMM yyyy}`, `{Employee.JoinDate:ord}` (st, nd, rd, th),
+  `{Salary.Gross:n0}`, `{Salary.Gross:words}`, `{X:upper|lower|cap|title}`. Formatted dates use English month names.
+- **Word templates (ADR-24):** a template may be the company's own .docx. Only the field text changes when it is
+  filled. Issued Word letters keep the filled file; Word letters for several people are saved one file per person.
 
 ## Invariants to test
 - No two `SalaryAssignment`s for one employee overlap in date.
